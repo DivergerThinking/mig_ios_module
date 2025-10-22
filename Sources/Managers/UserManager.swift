@@ -52,7 +52,7 @@ class UserManager {
 
     private init() {}
     
-    func initializeUser(withEmail email: String, userName: String, dni: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    func initializeUser(withEmail email: String, userName: String, dni: String?, completion: @escaping (Result<Void, Error>) -> Void) {
         let parameters = ["filter[email][_eq]": email]
 
         Task {
@@ -76,7 +76,7 @@ class UserManager {
                             //self.user = user
                             completion(.success(()))
                         case .failure(let error):
-                            print(error)
+                            Logger.shared.log(error)
                             completion(.failure(error))
                         }
                     }
@@ -99,17 +99,19 @@ class UserManager {
         }
     }
     
-    func registerUserIntoDatabase(email: String, userName: String, dni: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    func registerUserIntoDatabase(email: String, userName: String, dni: String?, completion: @escaping (Result<Void, Error>) -> Void) {
         
-        let userParams: [String: Any] = [
+        var userParams: [String: Any] = [
             "email" : email,
             "username" : userName,
-            "dni" : dni,
+//            "dni" : dni,
             //            "first_name" : user.firstName ?? "",
             //            "avatar" : user.avatar ?? "",
             //            "phone" : user.phone ?? "",
         ]
-        
+        if let dni {
+            userParams["dni"] = dni
+        }
         Task {
             do {
                 let updatedUser: UserModelResponse = try await DirectusService.shared.sendRequest(
@@ -118,11 +120,11 @@ class UserManager {
                     body: userParams
                 )
                 
-                print("Usuario actualizado: \(updatedUser)")
+                Logger.shared.log("Usuario actualizado: \(updatedUser)")
                 self.user = updatedUser.data
                 completion(.success(()))
             } catch {
-                print("Error al actualizar usuario: \(error)")
+                Logger.shared.log("Error al actualizar usuario: \(error)")
                 completion(.failure(error))
             }
         }

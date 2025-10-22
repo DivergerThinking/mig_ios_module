@@ -43,7 +43,7 @@ struct DetailsTournamentView: View {
                     }
                     
                     Text(title.uppercased())
-                        .font(.custom("Madridingamefont-Regular", size: 20))
+                        .font(.madridInGameiOSFont(size: 20))
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding(.top, 5)

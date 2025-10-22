@@ -59,7 +59,7 @@ class ProfileInformationViewModel: ObservableObject {
 //                avatarId = try await updateAvatar()
 //                self.avatar = avatarId
 //            } catch {
-//                print("Error al subir la imagen: \(error.localizedDescription)")
+//                Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
 //                DispatchQueue.main.async {
 //                    self.showToastFailure = true
 //                    self.isLoading = false
@@ -73,7 +73,7 @@ class ProfileInformationViewModel: ObservableObject {
                 self.newAvatar = nil // <- Primero limpiar esto
                 self.avatar = avatarId
             } catch {
-                print("Error al subir la imagen: \(error.localizedDescription)")
+                Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     self.showToastFailure = true
                     self.isLoading = false
@@ -100,11 +100,11 @@ class ProfileInformationViewModel: ObservableObject {
                 self.isLoading = false
                 switch result {
                 case .success(let profile):
-                    print("Perfil actualizado correctamente: \(profile)")
+                    Logger.shared.log("Perfil actualizado correctamente: \(profile)")
                     self.showToastSuccess = true
                     self.isEditing = false
                 case .failure(let error):
-                    print("Error al actualizar perfil: \(error.localizedDescription)")
+                    Logger.shared.log("Error al actualizar perfil: \(error.localizedDescription)")
                     self.showToastFailure = true
                 }
             }
@@ -133,17 +133,17 @@ class ProfileInformationViewModel: ObservableObject {
                         do {
                             let decodedResponse = try JSONDecoder().decode(SendImageResponse.self, from: data)
                             let fileId = decodedResponse.data.id
-                            print("Imagen subida con éxito. ID: \(fileId)")
+                            Logger.shared.log("Imagen subida con éxito. ID: \(fileId)")
                             continuation.resume(returning: fileId)
                         } catch {
-                            print("Error al decodificar JSON: \(error)")
+                            Logger.shared.log("Error al decodificar JSON: \(error)")
                             continuation.resume(throwing: error)
                         }
                     } else {
                         continuation.resume(throwing: NSError(domain: "Error al procesar la respuesta", code: 0))
                     }
                 case .failure(let error):
-                    print("Error al subir la imagen: \(error.localizedDescription)")
+                    Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }

@@ -17,19 +17,20 @@ class MadridInGameiOSViewModel: ObservableObject {
 
     private let email: String
     private let userName: String
-    private let dni: String
+    private let dni: String?
     private let userManager = UserManager.shared
     private let environmentManager: EnvironmentManager
     
     private var originalStyle: UIUserInterfaceStyle?
     
-    init(email: String, username: String, dni: String, isPro: Bool, openCompetitions: Bool) {
+    init(email: String, username: String, dni: String?, isPro: Bool, openCompetitions: Bool) {
         self.email = email
         self.userName = username
         self.dni = dni
         self.environmentManager = EnvironmentManager(isPro: isPro)
         self.openCompetitions = openCompetitions
         
+        Logger.shared.isEnabled = !isPro
         if self.openCompetitions {
             self.selectTab(2)
         }
@@ -84,15 +85,15 @@ class MadridInGameiOSViewModel: ObservableObject {
     
 //    func loadCustomFonts() {
 //        guard let fontURL = Bundle.frameworkBundle?.url(forResource: "Madrid_in_game_font", withExtension: "otf") else {
-//            print("Fuente no encontrada")
+//            Logger.shared.log("Fuente no encontrada")
 //            return
 //        }
 //        
 //        do {
 //            try FontBlaster.blast(fonts: [fontURL])
-//            print("Fuente cargada correctamente")
+//            Logger.shared.log("Fuente cargada correctamente")
 //        } catch {
-//            print("Error al cargar la fuente: \(error)")
+//            Logger.shared.log("Error al cargar la fuente: \(error)")
 //        }
 //    }
 

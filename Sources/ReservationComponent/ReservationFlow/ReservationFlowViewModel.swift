@@ -22,7 +22,7 @@ class ReservationFlowViewModel: ObservableObject {
     @Published var selectedSlots: [GamingSpaceTime] = []
     @Published var enabledSlots: [GamingSpaceTime] = []
     
-    @Published var markedDates: [MarkTrainnigDatesAndReservetions] = []
+    @Published var markedDates: [MarkTrainingDatesAndReservations] = []
     
     @Published var availableSpaces: [Space] = []
     @Published var selectedSpace: Space?
@@ -68,71 +68,59 @@ class ReservationFlowViewModel: ObservableObject {
     }
     
     func fetchTeamReservationsByUser(completion: @escaping () -> Void) {
-        guard let user = userManager.getUser() else { return }
-        
-        self.isLoading = true
-        
-        let userId = user.id
-        
-        let dispatchGroup = DispatchGroup()
-        
-        dispatchGroup.enter()
-        reservationService.getReservesByUser(userId: userId ?? "") { [weak self] result in
+        guard let user = userManager.getUser(), let userId = user.id else { return }
+
+        isLoading = true
+
+        reservationService.getReservesByUser(userId: userId) { [weak self] result in
+            guard let self = self else { return }
+
             DispatchQueue.main.async {
-                defer { dispatchGroup.leave() } // Se asegura de salir del grupo al finalizar
-                
                 switch result {
                 case .success(let reservations):
-                    let innerDispatchGroup = DispatchGroup()
-                    
-                    for reservation in reservations {
-                        innerDispatchGroup.enter()
-                        
-                        if let createDate = Utils.createDate(from: reservation.date) {
-                            DispatchQueue.main.async {
-                                self?.markedDates.append(MarkTrainnigDatesAndReservetions(date: createDate, individualReservation: true))
-                            }
-                        }
+                    let validDates = reservations.compactMap { Utils.createDate(from: $0.date) }
+                    let markedReservations = validDates.map {
+                        MarkTrainingDatesAndReservations(date: $0, individualReservation: true)
                     }
-                    
-                    // Esperamos que todas las llamadas internas terminen
-                    innerDispatchGroup.notify(queue: .main) {
-                        print("Reservas obtenidas: \(reservations)")
-                        self?.isLoading = false
 
-                    }
-                    
+                    self.markedDates.append(contentsOf: markedReservations)
+                    Logger.shared.log("Reservas obtenidas: \(reservations)")
+
                 case .failure(let error):
-                    print("Error al obtener reservas: \(error)")
-                    self?.isLoading = false
-
+                    Logger.shared.log("Error al obtener reservas: \(error)")
                 }
+
+                self.isLoading = false
+                completion()
             }
         }
-        
-        dispatchGroup.notify(queue: .main) {
-            completion()
-        }
     }
-    
+
     func getBlockedDays() {
-        self.isLoading = true
-        
+        isLoading = true
+
         reservationService.getAllBlockedDays { [weak self] result in
+            guard let self = self else { return }
+
             DispatchQueue.main.async {
                 switch result {
                 case .success(let blockedDays):
-                    for blockDay in blockedDays {
-                        guard let blockDate = blockDay.date else { continue }
-                        if let createDate = Utils.createDate(from: blockDate) {
-                            DispatchQueue.main.async {
-                                self?.markedDates.append(MarkTrainnigDatesAndReservetions(date: createDate, blockedDays: true))
-                            }
-                        }
+                    let validDates = blockedDays.compactMap { blockDay -> Date? in
+                        guard let blockDate = blockDay.date else { return nil }
+                        return Utils.createDate(from: blockDate)
                     }
+                    
+                    let marked = validDates.map {
+                        MarkTrainingDatesAndReservations(date: $0, blockedDays: true)
+                    }
+                    
+                    self.markedDates.append(contentsOf: marked)
+
                 case .failure(let error):
-                    print("Error al obtener los dias bloqueados: \(error)")
+                    Logger.shared.log("Error al obtener los dias bloqueados: \(error)")
                 }
+
+                self.isLoading = false
             }
         }
     }
@@ -183,7 +171,7 @@ class ReservationFlowViewModel: ObservableObject {
                     self?.updateEnabledSlots()
                     
                 case .failure(let error):
-                    print("Error fetching slots: \(error)")
+                    Logger.shared.log("Error fetching slots: \(error)")
                 }
             }
         }
@@ -246,7 +234,7 @@ class ReservationFlowViewModel: ObservableObject {
                     }
                     
                 case .failure(let error):
-                    print("Error fetching spaces: \(error.localizedDescription)")
+                    Logger.shared.log("Error fetching spaces: \(error.localizedDescription)")
                 }
             }
         }
@@ -261,13 +249,11 @@ class ReservationFlowViewModel: ObservableObject {
         }
     }
     
-    func calculateDayValue(for date: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yyyy"
-        guard let date = formatter.date(from: date) else { return 0 }
+    func calculateDayValue(for date: Date?) -> Int {
+        guard let date else { return 0 }
         let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: date) // Domingo es 1
-        return weekday - 1 // Convertir al formato requerido (Lunes = 1, Domingo = 7)
+        let weekday = calendar.component(.weekday, from: date)
+        return weekday == 1 ? 7 : weekday - 1
     }
     
     func checkIfDNIExists() {
@@ -290,11 +276,11 @@ class ReservationFlowViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let profile):
-                    print("Dni actualizado correctamente: \(profile)")
+                    Logger.shared.log("Dni actualizado correctamente: \(profile)")
                     self.userManager.setDNI(dni)
                     self.createReservation()
                 case .failure(let error):
-                    print("Error al actualizar perfil: \(error.localizedDescription)")
+                    Logger.shared.log("Error al actualizar perfil: \(error.localizedDescription)")
                     self.isCreatingReservation = false
 
                 }
@@ -307,7 +293,7 @@ class ReservationFlowViewModel: ObservableObject {
               let space = selectedSpace,
               let userId = userManager.getUser()?.id,
               !selectedSlots.isEmpty else {
-            print("Datos incompletos para crear la reserva")
+            Logger.shared.log("Datos incompletos para crear la reserva")
             return
         }
         
@@ -338,12 +324,12 @@ class ReservationFlowViewModel: ObservableObject {
                     switch result {
                     case .success (let reservation):
                         self?.updateReservationWithQR(reservationInfo: reservation)
-                        print("Reserva creada exitosamente")
+                        Logger.shared.log("Reserva creada exitosamente")
                     case .failure(let error):
                         self?.isCreatingReservation = false
                         self?.reservationSuccess = false
                         self?.onReservationFail()
-                        print("Error al crear la reserva: \(error.localizedDescription)")
+                        Logger.shared.log("Error al crear la reserva: \(error.localizedDescription)")
                     }
                 }
             }
@@ -359,7 +345,7 @@ class ReservationFlowViewModel: ObservableObject {
               let space = selectedSpace,
               let userId = userManager.getUser()?.id,
               !selectedSlots.isEmpty else {
-            print("Datos incompletos para crear la reserva")
+            Logger.shared.log("Datos incompletos para crear la reserva")
             return
         }
         
@@ -369,13 +355,13 @@ class ReservationFlowViewModel: ObservableObject {
             UploadImageService().uploadImage(image: qrImage, fileName: "\(qrValue).jpg" ,completion: { result in
                 switch result {
                 case .success(let response):
-                    print("Imagen subida con éxito: \(response)")
+                    Logger.shared.log("Imagen subida con éxito: \(response)")
                     
                     if let data = response.data(using: .utf8) {
                         do {
                             let decodedResponse = try JSONDecoder().decode(SendImageResponse.self, from: data)
                             let fileId = decodedResponse.data.id
-                            print("Imagen subida con éxito. ID: \(fileId)")
+                            Logger.shared.log("Imagen subida con éxito. ID: \(fileId)")
                             
                             
                             let reservation = Reservation(
@@ -398,13 +384,13 @@ class ReservationFlowViewModel: ObservableObject {
                                     switch result {
                                     case .success:
                                         self?.isCreatingReservation = true
-                                        print("Reserva creada exitosamente")
+                                        Logger.shared.log("Reserva creada exitosamente")
                                         self?.reservationSuccess = true
                                         self?.onReservationSuccess()
 
                                     case .failure(let error):
                                         self?.isCreatingReservation = true
-                                        print("Error al crear la reserva: \(error.localizedDescription)")
+                                        Logger.shared.log("Error al crear la reserva: \(error.localizedDescription)")
                                         self?.reservationSuccess = false
                                         self?.onReservationFail()
                                     }
@@ -412,11 +398,11 @@ class ReservationFlowViewModel: ObservableObject {
                             }
                             
                         } catch {
-                            print("Error al decodificar JSON: \(error)")
+                            Logger.shared.log("Error al decodificar JSON: \(error)")
                         }
                     }
                 case .failure(let error):
-                    print("Error al subir la imagen: \(error.localizedDescription)")
+                    Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
                     self.isCreatingReservation = true
                     self.reservationSuccess = false
                     self.onReservationFail()

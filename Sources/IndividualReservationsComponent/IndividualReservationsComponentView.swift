@@ -44,7 +44,11 @@ struct IndividualReservationsComponentView: View {
                 } else {
                     VStack (spacing: 10){
                         titleBanner
-                        trainningTeamList
+                        if viewModel.allIndividualReservations.isEmpty {
+                            noReservationAvailable
+                        } else {
+                            trainingTeamList
+                        }
                         Spacer()
                         reservationButton
                     }
@@ -56,12 +60,20 @@ struct IndividualReservationsComponentView: View {
                     set: { viewModel.cancelReservation = $0 }
                 )) {
                     Group {
+                        let subtitle = if let description = viewModel.individualSelectedInformation?.friendlyDescription {
+                            "¿Quieres cancelar la reserva del \(description)?"
+                        } else {
+                            "¿Quieres cancelar la reserva?"
+                        }
+                        
                         CancelOrDeleteComponent(
                             title: "CANCELAR RESERVA",
-                            subtitle: "¿Quieres cancelar esta reserva?"
+                            subtitle: subtitle,
+                            acceptTitle: "Sí",
+                            cancelTitle: "No"
                         ) {
                             viewModel.cancelReservation = false
-                        } aceptedAction: {
+                        } acceptedAction: {
                             viewModel.deleteReservation()
                         }
                     }
@@ -72,7 +84,7 @@ struct IndividualReservationsComponentView: View {
                 CustomPopup(isPresented: $viewModel.noReservationAllowed) {
                     VStack (spacing: 10){
                         Text("Se ha alcanzado el máximo de reservas solicitadas")
-                            .font(.custom("Madridingamefont-Regular", size: 17))
+                            .font(.madridInGameiOSFont(size: 17))
                             .foregroundColor(.white)
                             .padding()
                     }
@@ -111,7 +123,7 @@ extension IndividualReservationsComponentView {
     private var titleBanner: some View {
         HStack {
             Text("RESERVAS INDIVIDUALES")
-                .font(.custom("Madridingamefont-Regular", size: 20))
+                .font(.madridInGameiOSFont(size: 20))
                 .fontWeight(.bold)
                 .foregroundStyle(Color.white)
             Spacer()
@@ -129,7 +141,7 @@ extension IndividualReservationsComponentView {
         }
     }
     
-    private var trainningTeamList: some View {
+    private var trainingTeamList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(viewModel.allIndividualReservations, id: \.id) { individualReservation in
@@ -144,6 +156,15 @@ extension IndividualReservationsComponentView {
         }
     }
     
+    private var noReservationAvailable: some View {
+        VStack(alignment: .center, spacing: 20) {
+            Spacer()
+            Text("No hay reservas")
+                .font(.madridInGameiOSFont(size: 18))
+                .foregroundStyle(Color.white)
+            Spacer()
+        }
+    }
     
     private var reservationButton: some View {
         CustomButton(text: "Reservar",
@@ -160,3 +181,17 @@ extension IndividualReservationsComponentView {
     }
 }
 
+extension IndividualReservation {
+    var friendlyDescription: String? {
+        if let date = Date.dateFromString(date: date) {
+            let formattedDate = date.toUIDateString()
+            if let time = times.first?.gamingSpaceTimesID?.time {
+                return "\(formattedDate) - \(time)"
+            } else {
+                return "\(formattedDate)"
+            }
+        } else {
+            return nil
+        }
+    }
+}

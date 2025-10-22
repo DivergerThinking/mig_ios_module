@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.source_files = 'Sources/**/*.{swift}'
   
   s.resource_bundles = {
-    'MadridInGameiOSModule' => ['Resources/**/*.{ttf,otf}']
+    'MadridInGameiOSModule' => ['Resources/**/*.{ttf,otf,strings}', 'Resources/*.lproj/*.strings']
   }
   
   s.swift_versions = ['5.0']

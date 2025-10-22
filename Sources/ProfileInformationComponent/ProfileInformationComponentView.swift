@@ -49,7 +49,7 @@ extension ProfileInformationComponentView {
     private var titleComponent: some View {
         HStack {
             Text("SOBRE MÍ")
-                .font(.custom("Madridingamefont-Regular", size: 20))
+                .font(.madridInGameiOSFont(size: 20))
                 .foregroundColor(.white)
                 .padding(.top, 4)
             
@@ -113,7 +113,7 @@ extension ProfileInformationComponentView {
     private var editButton: some View {
         VStack (alignment: .center){
             if !viewModel.isEditing {
-                CustomButton(text: "Area Personal", needsBackground: true, backgroundColor: .cyan, pressEnabled: true, widthButton: 280, heightButton: 20) {
+                CustomButton(text: "Área Personal", needsBackground: true, backgroundColor: .cyan, pressEnabled: true, widthButton: 280, heightButton: 20) {
                     viewModel.openSafariToPersonalArea()//toggleEditing()
                     //viewModel.toggleEditing()
                 }
@@ -145,11 +145,11 @@ struct ProfileInfoView: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.custom("Madridingamefont-Regular", size: 14))
+                .font(.madridInGameiOSFont(size: 14))
                 .foregroundColor(.gray.opacity(1.0))
             Spacer()
             Text(text)
-                .font(.custom("Madridingamefont-Regular", size: 14))
+                .font(.madridInGameiOSFont(size: 14))
                 .foregroundColor(.white)
         }
         .padding()

@@ -39,7 +39,7 @@ struct CompetitionsView: View {
 extension CompetitionsView {
     private var titleBanner: some View {
         Text("COMPETICIONES")
-            .font(.custom("Madridingamefont-Regular", size: 24))
+            .font(.madridInGameiOSFont(size: 24))
             .foregroundColor(.white)
             .padding(.leading, 20)
             .padding(.bottom, 7)

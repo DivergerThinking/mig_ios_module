@@ -35,7 +35,7 @@ class CompetitionsViewModel: ObservableObject {
                 case .success(let competitions):
                     self?.compatitionInformation = competitions
                 case .failure(let error):
-                    print("Error al obtener reservas de equipo: \(error)")
+                    Logger.shared.log("Error al obtener reservas de equipo: \(error)")
                 }
             }
         }

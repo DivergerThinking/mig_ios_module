@@ -59,7 +59,7 @@ struct CompatitionsDetailViewComponentView: View {
             .contentShape(Rectangle()) // Asegurar que toda el área sea tocable
             
             Text((viewModel.competitionsInformation.title)!)
-                .font(.custom("Madridingamefont-Regular", size: 25))
+                .font(.madridInGameiOSFont(size: 25))
                 .foregroundColor(.white)
                 .shadow(color: Color.black.opacity(0.5), radius: 5)
                 .padding(.bottom, 8)

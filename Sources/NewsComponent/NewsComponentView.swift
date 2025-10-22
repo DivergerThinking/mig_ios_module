@@ -44,7 +44,7 @@ extension NewsComponentView {
     private var titleAndPlusButtonBanner: some View {
         HStack {
             Text("NOTICIAS")
-                .font(.custom("Madridingamefont-Regular", size: 25))
+                .font(.madridInGameiOSFont(size: 25))
                 .foregroundStyle(Color.white)
             
             Spacer()
@@ -66,7 +66,7 @@ extension NewsComponentView {
         VStack {
             Spacer()
             Text("No hay noticias en este equipo actualmente")
-                .font(.custom("Madridingamefont-Regular", size: 15))
+                .font(.madridInGameiOSFont(size: 15))
                 .foregroundStyle(Color.gray)
                 .padding()
             Spacer()

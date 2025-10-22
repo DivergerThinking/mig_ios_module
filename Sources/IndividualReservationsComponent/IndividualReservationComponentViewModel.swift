@@ -66,7 +66,7 @@ class IndividualReservationComponentViewModel: ObservableObject {
                                     }
                                     
                                 case .failure(let error):
-                                    print("Error al obtener reservas: \(error)")
+                                    Logger.shared.log("Error al obtener reservas: \(error)")
                                 }
                                 innerDispatchGroup.leave()
                             }
@@ -75,11 +75,11 @@ class IndividualReservationComponentViewModel: ObservableObject {
                     
                     // Esperamos que todas las llamadas internas terminen
                     innerDispatchGroup.notify(queue: .main) {
-                        print("Reservas obtenidas: \(reservations)")
+                        Logger.shared.log("Reservas obtenidas: \(reservations)")
                     }
 
                 case .failure(let error):
-                    print("Error al obtener reservas: \(error)")
+                    Logger.shared.log("Error al obtener reservas: \(error)")
                 }
             }
         }
@@ -127,7 +127,7 @@ class IndividualReservationComponentViewModel: ObservableObject {
             //self.isRemoveTraning = true
             self.cancelReservation = true
         case .seeDetails:
-            print("See individual training for \(individualSelectedInformation)")
+            Logger.shared.log("See individual training for \(individualSelectedInformation)")
             self.individualSelectedInformation = individualSelectedInformation
             self.isSelectTraning = true
             break
@@ -142,7 +142,7 @@ class IndividualReservationComponentViewModel: ObservableObject {
                     self?.isLoading = false
                     switch result {
                     case .success:
-                        print("Success")
+                        Logger.shared.log("Success")
                         self?.allIndividualReservations.removeAll()
                         self?.showToastDeleteSuccess = true
                         self?.fetchReservations {
@@ -152,7 +152,7 @@ class IndividualReservationComponentViewModel: ObservableObject {
                     case .failure(let error):
                         self?.isLoading = false
                         self?.showToastDeleteFailure = true
-                        print("Error al eliminar la reserva: \(error.localizedDescription)")
+                        Logger.shared.log("Error al eliminar la reserva: \(error.localizedDescription)")
                         self?.cancelReservation.toggle()
                     }
                 }

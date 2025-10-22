@@ -3,11 +3,24 @@
 
 import SwiftUI
 
+public struct MadridInGameModel {
+    let userName: String
+    let email: String
+    let dni: String?
+    let accessToken: String
+    let logoMIG: UIImage
+    let qrMiddleLogo: UIImage
+}
+
 public struct MadridInGameiOSModule: View {
     @StateObject private var viewModel: MadridInGameiOSViewModel
     @Environment(\.presentationMode) var presentationMode
     
-    public init(email: String, userName: String, dni: String, accessToken: String, logoMIG: UIImage, qrMiddleLogo: UIImage) {
+    public init(_ model: MadridInGameModel) {
+        self.init(email: model.email, userName: model.userName, accessToken: model.accessToken, logoMIG: model.logoMIG, qrMiddleLogo: model.qrMiddleLogo)
+    }
+
+    public init(email: String, userName: String, dni: String? = nil, accessToken: String, logoMIG: UIImage, qrMiddleLogo: UIImage) {
         UserDefaults.saveAccessTokenKey(accessToken)
         UserDefaults.saveLogoMIG(logoMIG)
         UserDefaults.saveQrMiddleLogo(qrMiddleLogo)
@@ -91,7 +104,7 @@ public struct MadridInGameiOSModule: View {
             VStack {
                 Text(title)
                     .foregroundColor(viewModel.selectedTab == tab ? .cyan : .white)
-                    .font(.custom("Madridingamefont-Regular", size: 15))
+                    .font(.madridInGameiOSFont(size: 15))
                 Rectangle()
                     .fill(viewModel.selectedTab == tab ? Color.cyan : Color.clear)
                     .frame(height: 3)

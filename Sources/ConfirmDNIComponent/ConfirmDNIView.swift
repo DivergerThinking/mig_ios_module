@@ -44,7 +44,7 @@ extension ConfirmDNIView {
     private var titleAndSubtitleComponent: some View {
         VStack(spacing: 8) {
             Text("Confirma tu DNI")
-                .font(.custom("Madridingamefont-Regular", size: 25))
+                .font(.madridInGameiOSFont(size: 25))
                 .foregroundStyle(Color.white)
 
             Text("Introduce y confirma tu DNI")
@@ -55,7 +55,7 @@ extension ConfirmDNIView {
 
     private var textComponent: some View {
         Text("Importante: Debes llevar tu DNI contigo para poder acceder al centro la primera vez y validar tu usuario.")
-            .font(.custom("Madridingamefont-Regular", size: 12))
+            .font(.madridInGameiOSFont(size: 12))
             .foregroundStyle(.white)
             .multilineTextAlignment(.center)
             .padding(.horizontal)
