@@ -91,6 +91,17 @@ struct IndividualReservationsComponentView: View {
                 }
                 .transition(.scale)
                 .zIndex(1)
+                
+                CustomPopup(isPresented: $viewModel.noReservationAllowedWithoutDNI) {
+                    VStack (spacing: 10){
+                        Text("Se ha alcanzado el máximo de reservas solicitadas para usuarios no verificados. Por favor, verifica tu DNI y vuelve a intentarlo.")
+                            .font(.madridInGameiOSFont(size: 17))
+                            .foregroundColor(.white)
+                            .padding()
+                    }
+                }
+                .transition(.scale)
+                .zIndex(1)
             }
         }
         .sheet(isPresented: $viewModel.isReservationFlowPresented) {
@@ -115,6 +126,20 @@ struct IndividualReservationsComponentView: View {
         }
         .onAppear {
             self.viewModel.getAndRefreshReservationsData()
+        }
+        .overlay {
+            if self.viewModel.dniIsMissing {
+                VStack {
+                    ConfirmDNIView { value in
+                        if !value.isEmpty {
+                            self.viewModel.setDNIToTheUser(value)
+                        }
+                        self.viewModel.dniIsMissing = false
+                    }
+                }
+                .background(.black)
+                .padding(.bottom, 20)
+            }
         }
     }
 }
@@ -166,16 +191,40 @@ extension IndividualReservationsComponentView {
         }
     }
     
+    @ViewBuilder
     private var reservationButton: some View {
+        let backgroundColor: Color = if let user = viewModel.userManager.getUser() {
+            if viewModel.allIndividualReservations.count < user.numberOfBookingsAllowed {
+                Color.cyan
+            } else {
+                Color.gray
+            }
+        } else {
+            Color.gray
+        }
+        
         CustomButton(text: "Reservar",
                      needsBackground: true,
-                     backgroundColor: viewModel.allIndividualReservations.count < viewModel.userManager.getUser()?.reservesAllowed ?? 1 ? Color.cyan : Color.gray,
+                     backgroundColor: backgroundColor,
                      pressEnabled: true,
                      widthButton: 280, heightButton: 50) {
-            if viewModel.allIndividualReservations.count < viewModel.userManager.getUser()?.reservesAllowed ?? 1  {
-                self.viewModel.isReservationFlowPresented = true
+            guard let user = viewModel.userManager.getUser() else {
+                viewModel.noReservationAllowed = true
+                return
+            }
+            
+            if viewModel.allIndividualReservations.count >= user.numberOfBookingsAllowed && user.isUserActive {
+                viewModel.noReservationAllowed = true
+                return
+            } else if viewModel.allIndividualReservations.count >= user.numberOfBookingsAllowed && !user.isUserActive {
+                viewModel.noReservationAllowedWithoutDNI = true
             } else {
-                self.viewModel.noReservationAllowed = true
+                // check for dni
+                if user.isDNIAvailable {
+                    viewModel.isReservationFlowPresented = true
+                } else {
+                    viewModel.dniIsMissing = true
+                }
             }
         }
     }

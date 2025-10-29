@@ -8,25 +8,46 @@
 import SwiftUI
 import FontBlaster
 
+public struct MadridInGameUserData {
+    let name: String?
+    let lastName: String?
+    let userName: String
+    let email: String
+    let dni: String?
+    let phone: String?
+    let accessToken: String
+    let logoMIG: UIImage?
+    let qrMiddleLogo: UIImage?
+    
+    public init(name: String?, lastName: String?, userName: String, email: String, dni: String?, phone: String?, accessToken: String, logoMIG: UIImage?, qrMiddleLogo: UIImage?) {
+        self.name = name
+        self.lastName = lastName
+        self.userName = userName
+        self.email = email
+        self.dni = dni
+        self.phone = phone
+        self.accessToken = accessToken
+        self.logoMIG = logoMIG
+        self.qrMiddleLogo = qrMiddleLogo
+    }
+}
+
 class MadridInGameiOSViewModel: ObservableObject {
     @Published var selectedTab: Int = 0
     @Published var isLoading: Bool = true
     @Published var user: UserModel?
     @Published var errorMessage: String?
     @Published var openCompetitions: Bool
+    
+    private let userInfo: MadridInGameUserData
 
-    private let email: String
-    private let userName: String
-    private let dni: String?
     private let userManager = UserManager.shared
     private let environmentManager: EnvironmentManager
     
     private var originalStyle: UIUserInterfaceStyle?
     
-    init(email: String, username: String, dni: String?, isPro: Bool, openCompetitions: Bool) {
-        self.email = email
-        self.userName = username
-        self.dni = dni
+    init(userInfo: MadridInGameUserData, isPro: Bool, openCompetitions: Bool) {
+        self.userInfo = userInfo
         self.environmentManager = EnvironmentManager(isPro: isPro)
         self.openCompetitions = openCompetitions
         
@@ -49,8 +70,7 @@ class MadridInGameiOSViewModel: ObservableObject {
     }
     
     func initializeModule() {
-        //isLoading = true
-        userManager.initializeUser(withEmail: email, userName: userName, dni: dni) { [weak self] result in
+        userManager.initializeUser(userInfo: userInfo) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 switch result {

@@ -29,7 +29,6 @@ class ReservationFlowViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var isCreatingReservation: Bool = false
     @Published var reservationSuccess: Bool = false
-    @Published var dniIsMissing: Bool = false
     
     @Published var userManager = UserManager.shared
     
@@ -256,37 +255,7 @@ class ReservationFlowViewModel: ObservableObject {
         return weekday == 1 ? 7 : weekday - 1
     }
     
-    func checkIfDNIExists() {
-        let user = userManager.getUser()
-        let dni = user?.dni ?? ""
-        if dni.isEmpty {
-            dniIsMissing = true
-        } else {
-            dniIsMissing = false
-        }
-    }
-    
-    func setDNIToTheUser(_ dni: String) {
-        guard let id = self.userManager.getUser()?.id else {
-            return
-        }
-        
-        self.isCreatingReservation = true
-        ProfileInformation().updateSingleDNIInformationProfile(userId: id, dni: dni) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let profile):
-                    Logger.shared.log("Dni actualizado correctamente: \(profile)")
-                    self.userManager.setDNI(dni)
-                    self.createReservation()
-                case .failure(let error):
-                    Logger.shared.log("Error al actualizar perfil: \(error.localizedDescription)")
-                    self.isCreatingReservation = false
 
-                }
-            }
-        }
-    }
     
     func createReservation() {
         guard let date = selectedDate,
@@ -297,9 +266,9 @@ class ReservationFlowViewModel: ObservableObject {
             return
         }
         
-        checkIfDNIExists()
+//        checkIfDNIExists()
         
-        if !dniIsMissing {
+//        if !dniIsMissing {
             
             let times = selectedSlots
             
@@ -333,7 +302,7 @@ class ReservationFlowViewModel: ObservableObject {
                     }
                 }
             }
-        }
+//        }
     }
     
     func updateReservationWithQR(reservationInfo: ReserveResponse) {

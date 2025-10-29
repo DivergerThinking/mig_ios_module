@@ -286,17 +286,7 @@ struct SelectSpaceView: View {
     @ObservedObject var viewModel: ReservationFlowViewModel
     
     var body: some View {
-        if self.viewModel.dniIsMissing {
-            VStack {
-                ConfirmDNIView { value in
-                    self.viewModel.isCreatingReservation = true
-                    self.viewModel.dniIsMissing = false
-                    self.viewModel.setDNIToTheUser(value)
-                }
-            }
-            .padding(.bottom, 20)
-        }
-        else if (viewModel.isCreatingReservation){
+       if (viewModel.isCreatingReservation){
             VStack {
                 Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!)
                     .resizable()

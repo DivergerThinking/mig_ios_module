@@ -153,7 +153,7 @@ class SeeReservationsOrCreateTeamTrainingViewModel: ObservableObject {
     }
     
     func reservationsService(team: TeamModelReal, userId: String, completion: @escaping () -> Void) {
-        reservationService.getAllTrainnings(teamId: team.id, userId: userId) { [weak self] result in
+        reservationService.getAllTrainings(teamId: team.id, userId: userId) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let reservations):

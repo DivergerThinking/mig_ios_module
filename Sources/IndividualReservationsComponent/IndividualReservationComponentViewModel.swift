@@ -17,8 +17,10 @@ class IndividualReservationComponentViewModel: ObservableObject {
     @Published var cancelReservation: Bool = false
     @Published var selectedReservation: Reservation?
     
-    
+    @Published var dniIsMissing: Bool = false
+
     @Published var noReservationAllowed: Bool = false
+    @Published var noReservationAllowedWithoutDNI: Bool = false
 
     @Published var isLoading: Bool = true
     @Published var showToastSuccess: Bool = false
@@ -158,4 +160,38 @@ class IndividualReservationComponentViewModel: ObservableObject {
                 }
             }
         }
+}
+
+extension IndividualReservationComponentViewModel {
+    func checkIfDNIExists() {
+        let user = userManager.getUser()
+        let dni = user?.dni ?? ""
+        if dni.isEmpty {
+            dniIsMissing = true
+        } else {
+            dniIsMissing = false
+        }
+    }
+    
+    func setDNIToTheUser(_ dni: String) {
+        guard let id = self.userManager.getUser()?.id else {
+            return
+        }
+        self.isLoading = true
+        ProfileInformation().updateSingleDNIInformationProfile(userId: id, dni: dni) { result in
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+                switch result {
+                case .success(let profile):
+                    Logger.shared.log("Dni actualizado correctamente: \(profile)")
+                    self?.userManager.setDNI(dni)
+                    self?.isReservationFlowPresented = true
+                case .failure(let error):
+                    Logger.shared.log("Error al actualizar perfil: \(error.localizedDescription)")
+//                    self.isCreatingReservation = false
+                    //TODO: show an error
+                }
+            }
+        }
+    }
 }

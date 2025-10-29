@@ -110,7 +110,7 @@ extension Date {
     
     func toUIDateString() -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .long//"eeee, dd/MM/yyyy"
+        formatter.dateStyle = .long
         formatter.locale = Locale.current
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter.string(from: self)

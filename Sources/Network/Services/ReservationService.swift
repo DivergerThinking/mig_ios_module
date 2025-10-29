@@ -174,7 +174,7 @@ class ReservationService {
         }
     }
 
-    func getAllTrainnings(teamId: String, userId: String, completion: @escaping (Result<[EventModel], Error>) -> Void) {
+    func getAllTrainings(teamId: String, userId: String, completion: @escaping (Result<[EventModel], Error>) -> Void) {
         let parameters: [String: String] = [
             "fields": "id, status, start_date, time, players.users_id.id, players.users_id.avatar, players.users_id.email, players.users_id.first_name, type, reserves.*, reserves.team.name, reserves.team.picture, reserves.times.gaming_space_times_id.time, notes",
             "filter[team][_eq]": teamId,

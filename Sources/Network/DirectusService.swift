@@ -183,3 +183,9 @@ actor DirectusService {
 }
 
 
+extension String {
+    var urlQueryValueEncoded: String? {
+        return addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)?
+            .replacingOccurrences(of: "+", with: "%2B")
+    }
+}

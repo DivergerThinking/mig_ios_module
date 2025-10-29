@@ -3,29 +3,35 @@
 
 import SwiftUI
 
-public struct MadridInGameModel {
-    let userName: String
-    let email: String
-    let dni: String?
-    let accessToken: String
-    let logoMIG: UIImage
-    let qrMiddleLogo: UIImage
-}
-
 public struct MadridInGameiOSModule: View {
     @StateObject private var viewModel: MadridInGameiOSViewModel
     @Environment(\.presentationMode) var presentationMode
     
-    public init(_ model: MadridInGameModel) {
-        self.init(email: model.email, userName: model.userName, accessToken: model.accessToken, logoMIG: model.logoMIG, qrMiddleLogo: model.qrMiddleLogo)
+    public init(_ model: MadridInGameUserData, isPreRelease: Bool = false) {
+        UserDefaults.saveAccessTokenKey(model.accessToken)
+        if let logo = model.logoMIG {
+            UserDefaults.saveLogoMIG(logo)
+        }
+        if let logo = model.qrMiddleLogo {
+            UserDefaults.saveQrMiddleLogo(logo)
+        }
+        
+        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(userInfo: model, isPro: !isPreRelease, openCompetitions: false))
     }
 
-    public init(email: String, userName: String, dni: String? = nil, accessToken: String, logoMIG: UIImage, qrMiddleLogo: UIImage) {
+    public init(email: String, userName: String, dni: String? = nil, accessToken: String, logoMIG: UIImage?, qrMiddleLogo: UIImage?, isPreRelease: Bool = false) {
         UserDefaults.saveAccessTokenKey(accessToken)
-        UserDefaults.saveLogoMIG(logoMIG)
-        UserDefaults.saveQrMiddleLogo(qrMiddleLogo)
 
-        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(email: email, username: userName, dni: dni, isPro: true, openCompetitions: false))
+        if let logo = logoMIG {
+            UserDefaults.saveLogoMIG(logo)
+        }
+        if let logo = qrMiddleLogo {
+            UserDefaults.saveQrMiddleLogo(logo)
+        }
+
+        let userInfo = MadridInGameUserData(name: nil, lastName: nil, userName: userName, email: email, dni: dni, phone: nil, accessToken: accessToken, logoMIG: logoMIG, qrMiddleLogo: qrMiddleLogo)
+        
+        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(userInfo: userInfo, isPro: !isPreRelease, openCompetitions: false))
     }
     
     public var body: some View {
