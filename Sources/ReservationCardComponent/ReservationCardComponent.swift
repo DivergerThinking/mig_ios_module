@@ -79,7 +79,9 @@ struct ReservationCardComponent: View {
                                     VStack(spacing: 10) {
                                         titleSubtitle
                                         imageReservationQr(imageSize)
-                                        playersCarouselComponent
+                                        if !viewModel.getAllPlayers().isEmpty {
+                                            playersCarouselComponent
+                                        }
                                     }
                                         .padding()
                                 )
@@ -269,7 +271,7 @@ extension ReservationCardComponent {
                                     case .success(let image):
                                         image
                                             .resizable()
-                                            .scaledToFit()
+                                            .scaledToFill()
                                             .frame(width: 35, height: 35)
                                             .clipShape(Circle())
                                     case .failure:

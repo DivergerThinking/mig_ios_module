@@ -27,6 +27,29 @@ enum HTTPMethods: String {
     case OPTIONS
 }
 
+extension NetworkError: LocalizedError {
+    public var localizedDescription: String {
+        switch self {
+        case .invalidURL:
+            return "Invalid URL"
+        case .invalidBody:
+            return "Invalid Body"
+        case .noData:
+            return "No Data"
+        case .invalidResponse:
+            return "Invalid Response"
+        case .encodingError:
+            return "Encoding Error"
+        case .decodingError:
+            return "Decoding Error"
+        }
+    }
+    
+    public var errorDescription: String? {
+        localizedDescription
+    }
+}
+
 actor DirectusService {
     // MARK: - Singleton Instance
     public static let shared = DirectusService()

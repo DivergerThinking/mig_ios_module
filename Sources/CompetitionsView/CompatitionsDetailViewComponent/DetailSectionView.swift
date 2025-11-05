@@ -9,9 +9,10 @@ import SwiftUI
 
 struct DetailSectionView: View {
     var title: String
-    var content: String
+    var content: String?
     var image: String
     var environmentManager = EnvironmentManager()
+    @State var decodedContent: String = ""
     
     var body: some View {
         ZStack {
@@ -47,11 +48,17 @@ struct DetailSectionView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding(.top, 5)
-                    
-                    Text(content.decoded)
-                        .font(.body)
-                        .foregroundColor(.white)
-                        .padding(.top, 5)
+                    if !decodedContent.isEmpty {
+                        Text(decodedContent)
+                            .font(.body)
+                            .foregroundColor(.white)
+                            .padding(.top, 5)
+                    } else {
+                        Spacer()
+                        Text("No hay información disponible.")
+                            .foregroundColor(.white)
+                            .padding()
+                    }
                     
                     Spacer()
                 }
@@ -61,5 +68,8 @@ struct DetailSectionView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .onAppear {
+            decodedContent = content?.decoded ?? ""
+        }
     }
 }

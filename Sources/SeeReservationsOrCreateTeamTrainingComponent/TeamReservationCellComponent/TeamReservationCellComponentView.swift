@@ -7,9 +7,11 @@ struct TeamReservationCellComponentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             iconDateAndRemoveBannerComponent
-            showReservationLocarion
-            playersCarouselComponent
-            if viewModel.reservation.notes != "" {
+            showReservationLocation
+            if !viewModel.getAllPlayers().isEmpty {
+                playersCarouselComponent
+            }
+            if !(viewModel.reservation.notes?.isEmpty ?? true) {
                 descriptionComponent
             }
             buttonsComponent
@@ -51,7 +53,7 @@ extension TeamReservationCellComponentView {
         }
     }
     
-    private var showReservationLocarion: some View {
+    private var showReservationLocation: some View {
         Text(viewModel.getTeamName() + " - " + viewModel.getReservationSite())
             .font(.madridInGameiOSFont(size: 12))
             .foregroundStyle(Color.white.opacity(0.8))
@@ -80,7 +82,7 @@ extension TeamReservationCellComponentView {
                                     case .success(let image):
                                         image
                                             .resizable()
-                                            .scaledToFit()
+                                            .scaledToFill()
                                             .frame(width: 35, height: 35)
                                             .clipShape(Circle())
                                     case .failure:

@@ -112,7 +112,6 @@ extension Date {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         formatter.locale = Locale.current
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter.string(from: self)
     }
     
@@ -143,5 +142,29 @@ extension String {
 extension Font {
     static func madridInGameiOSFont(size: CGFloat) -> Font {
         return Font.custom("Madridingamefont-Regular", size: size)
+    }
+}
+
+extension UIImage {
+    func resized(with maxSize: CGFloat) -> UIImage {
+        let maxDimension: CGFloat = maxSize
+        let aspectRatio = size.width / size.height
+        
+        var newSize: CGSize
+        if size.width > size.height {
+            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+        } else {
+            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
+        }
+        
+        if size.width <= maxDimension && size.height <= maxDimension {
+            return self
+        }
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        let resizedImage = renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+        return resizedImage
     }
 }

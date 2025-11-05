@@ -18,7 +18,7 @@ struct CompetitionsView: View {
                 VStack (alignment: .leading){
                     titleBanner
                     dropdownSplitSelectorComponent
-                    if !viewModel.compatitionInformation.isEmpty {
+                    if !viewModel.competitionInformation.isEmpty {
                         leaguesInformation
                     }
                     Spacer()
@@ -64,9 +64,9 @@ extension CompetitionsView {
     
     private var leaguesInformation: some View {
         VStack(spacing: 10) {
-            ForEach(viewModel.getAllInformationLeagues()) { competitonInformation in
+            ForEach(viewModel.getAllInformationLeagues()) { competitionInformation in
                 VStack {
-                    CompatitionsCarouselComponentView(leagueInformation: competitonInformation)
+                    CompetitionsCarouselComponentView(leagueInformation: competitionInformation)
                         .padding()
                     
                     RoundedRectangle(cornerRadius: 10)

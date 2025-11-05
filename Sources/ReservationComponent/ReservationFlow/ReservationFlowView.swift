@@ -258,7 +258,7 @@ struct SelectSlotView: View {
         }
         let isSlotTimeValid = slot.value > currentHourPlus2
 
-        let computedEnabled = isSlotDateToday ? isSlotTimeValid : isEnabled
+        let computedEnabled = isSlotDateToday ? (isSlotTimeValid && isEnabled) : isEnabled
 
         
         return Button(action: {

@@ -188,7 +188,6 @@ extension IndividualReservationComponentViewModel {
                     self?.isReservationFlowPresented = true
                 case .failure(let error):
                     Logger.shared.log("Error al actualizar perfil: \(error.localizedDescription)")
-//                    self.isCreatingReservation = false
                     //TODO: show an error
                 }
             }

@@ -29,7 +29,6 @@ struct NewsComponentView: View {
                 .sheet(isPresented: self.$viewModel.newSelected) {
                     NewsFlowComponent(news: self.viewModel.newsSelected)
                         .zIndex(1)
-                        .presentationDetents([.medium, .large])
                 }
 
                 .onDisappear {

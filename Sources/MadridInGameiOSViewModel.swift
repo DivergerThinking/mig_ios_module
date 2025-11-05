@@ -19,7 +19,7 @@ public struct MadridInGameUserData {
     let logoMIG: UIImage?
     let qrMiddleLogo: UIImage?
     
-    public init(name: String?, lastName: String?, userName: String, email: String, dni: String?, phone: String?, accessToken: String, logoMIG: UIImage?, qrMiddleLogo: UIImage?) {
+    public init(name: String? = nil, lastName: String? = nil, userName: String, email: String, dni: String? = nil, phone: String? = nil, accessToken: String, logoMIG: UIImage? = nil, qrMiddleLogo: UIImage? = nil) {
         self.name = name
         self.lastName = lastName
         self.userName = userName

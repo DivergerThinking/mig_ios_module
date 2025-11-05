@@ -16,7 +16,12 @@ class ProfileInformationViewModel: ObservableObject {
     @Published var showToastFailure = false
     @Published var isLoading = false
     @Published var isSaving = false
-
+    
+    @Published var showActionSheet: Bool = false
+    @Published var showImagePicker: Bool = false
+    @Published var selectedImage: UIImage?
+    @Published var isCamera = false
+    
     var firstName: String
     var lastName: String
     var dni: String
@@ -24,10 +29,10 @@ class ProfileInformationViewModel: ObservableObject {
     var username: String
     var phone: String
     var avatar: String?
-
+    
     private let userManager = UserManager.shared
     private let user: UserModel?
-
+    
     init() {
         self.user = userManager.getUser()
         self.firstName = user?.firstName ?? ""
@@ -38,7 +43,7 @@ class ProfileInformationViewModel: ObservableObject {
         self.phone = user?.phone ?? ""
         self.avatar = user?.avatar ?? ""
     }
-
+    
     func discardChanges() {
         firstName = user?.firstName ?? ""
         lastName = user?.lastName ?? ""
@@ -49,29 +54,16 @@ class ProfileInformationViewModel: ObservableObject {
         avatar = user?.avatar
         toggleEditing()
     }
-
-    func saveChanges() async {
+    
+    func saveChanges(image: UIImage?) async {
         self.isLoading = true
         var avatarId = self.user?.avatar
-
-//        if newAvatar != nil {
-//            do {
-//                avatarId = try await updateAvatar()
-//                self.avatar = avatarId
-//            } catch {
-//                Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
-//                DispatchQueue.main.async {
-//                    self.showToastFailure = true
-//                    self.isLoading = false
-//                }
-//                return
-//            }
-//        }
-        if newAvatar != nil {
+        if image != nil {
             do {
-                avatarId = try await updateAvatar()
+                avatarId = try await updateAvatar(with: image)
                 self.newAvatar = nil // <- Primero limpiar esto
                 self.avatar = avatarId
+                
             } catch {
                 Logger.shared.log("Error al subir la imagen: \(error.localizedDescription)")
                 DispatchQueue.main.async {
@@ -81,7 +73,7 @@ class ProfileInformationViewModel: ObservableObject {
                 return
             }
         }
-
+        
         
         ProfileInformation().updateInformationProfile(
             UserModel(
@@ -110,8 +102,8 @@ class ProfileInformationViewModel: ObservableObject {
             }
         }
     }
-
-
+    
+    
     func toggleEditing() {
         newAvatar = nil
         isEditing.toggle()
@@ -119,15 +111,16 @@ class ProfileInformationViewModel: ObservableObject {
     
     func openSafariToPersonalArea() {
         if let url = URL(string: "https://personal-area.azurewebsites.net") {
-                UIApplication.shared.open(url)
-            }
+            UIApplication.shared.open(url)
+        }
     }
-
-    func updateAvatar() async throws -> String {
-        guard let avatarPhoto = self.newAvatar else { return self.user?.avatar ?? "" }
+    
+    func updateAvatar(with image: UIImage?) async throws -> String {
+        guard let avatarPhoto = image else { return self.user?.avatar ?? "" }
+        let resizedPhoto = avatarPhoto.resized(with: 1024)
         return try await withCheckedThrowingContinuation { continuation in
-            UploadImageService().uploadImage(image: avatarPhoto, fileName: "\(UUID().uuidString.lowercased()).jpg") { result in
-                switch result {
+            UploadImageService().uploadImage(image: resizedPhoto, fileName: "\(UUID().uuidString.lowercased()).jpg") { result in
+                switch result { 
                 case .success(let response):
                     if let data = response.data(using: .utf8) {
                         do {
@@ -148,5 +141,15 @@ class ProfileInformationViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    func selectCamera() {
+        isCamera = true
+        showImagePicker = true
+    }
+    
+    func selectGallery() {
+        isCamera = false
+        showImagePicker = true
     }
 }

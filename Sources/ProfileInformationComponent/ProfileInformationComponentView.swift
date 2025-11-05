@@ -42,6 +42,35 @@ struct ProfileInformationComponentView: View {
                 }
             }
         }
+        .onAppear {
+            viewModel.selectedImage = nil
+        }
+        .onTapGesture {
+            viewModel.showActionSheet = true
+        }
+        .actionSheet(isPresented: $viewModel.showActionSheet) {
+            ActionSheet(
+                title: Text("Selecciona una opción"),
+                buttons: [
+                    .default(Text("Cámara")) {
+                        viewModel.selectCamera()
+                    },
+                    .default(Text("Galería")) {
+                        viewModel.selectGallery()
+                    },
+                    .cancel()
+                ]
+            )
+        }
+        .sheet(isPresented: $viewModel.showImagePicker) {
+            ImagePicker(isCamera: $viewModel.isCamera, selectedImage: $viewModel.selectedImage, imageSelected: { image in
+                Task {
+                    viewModel.isLoading = true
+                    await viewModel.saveChanges(image: image)
+                    viewModel.isLoading = false
+                }
+            })
+        }
     }
 }
 
@@ -98,15 +127,7 @@ extension ProfileInformationComponentView {
     }
     
     private var componentAvatarSelector: some View {
-        AvatarComponentView(viewModel: AvatarViewModel(selectedImage: viewModel.newAvatar, imageId: viewModel.avatar), enablePress: true, imageSelected: { image in
-            guard !viewModel.isSaving else { return }
-            viewModel.newAvatar = image
-            viewModel.isSaving = true
-            Task {
-                await viewModel.saveChanges()
-                viewModel.isSaving = false
-            }
-        })
+        AvatarComponentView(imageId: viewModel.avatar)
         .padding(.bottom, 20)
     }
     
