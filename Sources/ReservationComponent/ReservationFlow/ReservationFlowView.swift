@@ -72,6 +72,11 @@ struct ReservationFlowView: View {
                         .tag(2)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .highPriorityGesture(
+                    DragGesture()
+                        .onChanged { _ in }
+                        .onEnded { _ in }
+                )
                 
                 Spacer()
             }
@@ -386,3 +391,4 @@ struct SelectSpaceView: View {
         }
     }
 }
+

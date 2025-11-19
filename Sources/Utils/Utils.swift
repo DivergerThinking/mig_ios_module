@@ -7,7 +7,7 @@
 
 
 import Foundation
-import SwiftUICore
+import SwiftUI
 
 class Utils {
     static func createDate(from dateString: String, with format: String = "yyyy-MM-dd") -> Date? {
