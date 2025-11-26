@@ -135,7 +135,15 @@ extension Bundle {
 
 extension String {
     var localized: String {
-        return NSLocalizedString(self, bundle: Bundle.podBundle ?? .main, comment: "")
+        return NSLocalizedString(self, bundle: Bundle.podBundle ?? .main, comment: "\(self)_comment")
+    }
+
+    func localized(_ args: [CVarArg]) -> String {
+        return String(format: localized, args)
+    }
+
+    func localized(_ args: CVarArg...) -> String {
+        return String(format: localized, args)
     }
 }
 
