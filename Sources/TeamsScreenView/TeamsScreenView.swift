@@ -40,9 +40,15 @@ extension TeamsScreenView {
                 TabView(selection: $viewModel.selectedTab) {
                     SeeReservationsOrCreateTeamTrainingComponentView(viewModel: SeeReservationsOrCreateTeamTrainingViewModel(isUserMode: false, selectedTeam: viewModel.getTeamSelected()))
                         .tabItem {
-                            Label("Entrenamiento".localized, systemImage: "calendar")
+                            Label("dashboard.profile.training".localized, systemImage: "calendar")
                         }
                         .tag(TabBarTeamsBottom.trainning)
+                    
+                        ReservationsComponentView(viewModel: ReservationComponentViewModel(personalReservations: false))
+                        .tabItem {
+                        Label("Reservas".localized, systemImage: "calendar.badge.checkmark")
+                    }
+                        .tag(TabBarTeamsBottom.reservation)
                     
                     NewsComponentView()
                         .tabItem {
@@ -52,7 +58,7 @@ extension TeamsScreenView {
                     
                     PlayersTeamComponentView()
                         .tabItem {
-                            Label("Jugadores".localized, systemImage: "person.3.fill")
+                            Label("dashboard.sections.players".localized, systemImage: "person.3.fill")
                         }
                         .tag(TabBarTeamsBottom.team
                         )

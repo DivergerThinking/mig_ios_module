@@ -13,6 +13,7 @@ enum NetworkError: Error {
     case invalidBody
     case noData
     case invalidResponse
+    case serverError(statusCode: Int)
     case encodingError
     case decodingError
 }
@@ -38,6 +39,8 @@ extension NetworkError: LocalizedError {
             return "No Data"
         case .invalidResponse:
             return "Invalid Response"
+        case .serverError(let statusCode):
+            return "Server Error (\(statusCode))"
         case .encodingError:
             return "Encoding Error"
         case .decodingError:
@@ -113,7 +116,7 @@ actor DirectusService {
         if !(200...299).contains(httpResponse.statusCode) {
             let responseData = String(data: data, encoding: .utf8) ?? "No se pudo leer la respuesta"
             Logger.shared.log("Error HTTP: \(httpResponse.statusCode) - Respuesta: \(responseData)")
-            throw NetworkError.invalidResponse
+            throw NetworkError.serverError(statusCode: httpResponse.statusCode)
         }
         
         do {
@@ -180,6 +183,7 @@ actor DirectusService {
         
         // Agregar el cuerpo (body) si se necesita
         if !body.isEmpty {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
         }
         
@@ -203,6 +207,43 @@ actor DirectusService {
         _ = try await request(endpoint: endpoint, method: method, body: body)
     }
     
+    // MARK: - Trigger Flow (Webhook)
+    public func triggerFlow(flowId: String, body: [String: Any]) async throws {
+       guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty else {
+           throw NetworkError.invalidURL
+       }
+
+       let fullURLString = "\(baseURL)/flows/trigger/\(flowId)"
+
+       guard let url = URL(string: fullURLString) else {
+           throw NetworkError.invalidURL
+       }
+
+       Logger.shared.log("🛜 Flow trigger: \(url.absoluteString)")
+
+       var request = URLRequest(url: url)
+       request.httpMethod = HTTPMethods.POST.rawValue
+       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+       let accessToken = UserDefaults.getAccessTokenKey() ?? ""
+       request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+       request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+       let (data, response) = try await URLSession.shared.data(for: request)
+
+       guard let httpResponse = response as? HTTPURLResponse else {
+           throw NetworkError.invalidResponse
+       }
+
+       if !(200...299).contains(httpResponse.statusCode) {
+           let responseData = String(data: data, encoding: .utf8) ?? "No se pudo leer la respuesta"
+           Logger.shared.log("Error HTTP flow trigger: \(httpResponse.statusCode) - \(responseData)")
+           throw NetworkError.invalidResponse
+       }
+
+       Logger.shared.log("Flow trigger ejecutado correctamente")
+   }
 }
 
 

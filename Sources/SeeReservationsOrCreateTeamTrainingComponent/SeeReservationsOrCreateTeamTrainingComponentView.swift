@@ -73,7 +73,7 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
                 if !viewModel.isUserMode {
                     loadTeamImage
                 }
-                TextWithUnderlineComponent(title: viewModel.isUserMode ? "calendar".localized : "calendar".localized, underlineColor: Color.cyan)
+                TextWithUnderlineComponent(title: "dashboard.sections.calendar".localized, underlineColor: Color.cyan)
                     .padding(.top, viewModel.isUserMode ? 10 : 0)
                     .padding(.leading, viewModel.isUserMode ? 5 : 0)
                 Spacer()
@@ -101,7 +101,8 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
                     viewModel.dateSelected = stringDate
                     viewModel.isDateSelected = true
                 }
-                .frame(height: 300)
+                .frame(minHeight: 280, maxHeight: 360)
+                .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -109,7 +110,7 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
     private var nextTrainingBanner: some View {
         VStack {
             HStack (spacing: 8){
-                TextWithUnderlineComponent(title: viewModel.isDateSelected ? "Entrenamientos".localized : "Próximos entrenamientos".localized, underlineColor: Color.cyan)
+                TextWithUnderlineComponent(title: viewModel.isDateSelected ? "dashboard.layout.trainings".localized : "dashboard.teams.teamAreas.training.upcoming".localized, underlineColor: Color.cyan)
                     .padding(.top, viewModel.isUserMode ? 10 : 0)
                     .padding(.leading, viewModel.isUserMode ? 5 : 0)
                 
@@ -143,7 +144,7 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
                     .padding(.leading, 2)
                 
                 ForEach(viewModel.allIndividualReservations, id: \.id) { individualReservation in
-                    IndividualReservationsCellComponent(viewModel: IndividualReservationsCellViewModel(reservation: individualReservation, showDeleteOption: false)) { optionSelected in
+                    IndividualReservationsCellComponent(viewModel: IndividualReservationsCellViewModel(reservation: individualReservation, showDeleteAndEditOption: false)) { optionSelected in
                         viewModel.trainingIndividualListCellPressed(individualSelectedInformation: individualReservation, optionSelected: optionSelected)
                     }
                 }
@@ -156,7 +157,7 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
                     .opacity(0.7)
                 
                 ForEach(viewModel.allReservations, id: \.id) { reservation in
-                    TeamReservationCellComponentView(viewModel: TeamReservationCellComponentViewModel(reservation: reservation, showDeleteOption: false)) { optionSelected in
+                    TeamReservationCellComponentView(viewModel: TeamReservationCellComponentViewModel(reservation: reservation, showDeleteAndEditOption: false)) { optionSelected in
                         viewModel.trainingTeamListCellPressed(teamSelectedInformation: reservation, optionSelected: optionSelected)
                     }
                 }
@@ -164,7 +165,7 @@ extension SeeReservationsOrCreateTeamTrainingComponentView {
             
             
             if viewModel.allIndividualReservations.isEmpty && viewModel.allReservations.isEmpty {
-                Text("No hay entrenamientos programados".localized)
+                Text("dashboard.teams.teamAreas.trainings.noTrainings".localized)
                     .font(.madridInGameiOSFont(size: 14))
                     .foregroundColor(.white)
                     .opacity(0.7)

@@ -22,12 +22,12 @@ extension DashboardScreenView {
                 TabView(selection: $viewModel.selectedTab) {
                     SeeReservationsOrCreateTeamTrainingComponentView(viewModel: SeeReservationsOrCreateTeamTrainingViewModel(isUserMode: true, selectedTeam: nil))
                         .tabItem {
-                            Label("calendar".localized, systemImage: "calendar")
+                            Label("dashboard.sections.calendar".localized, systemImage: "calendar")
                         }
                         .tag(TabBarDashboardBottom.calendar)
 
                     
-                    IndividualReservationsComponentView(viewModel: IndividualReservationComponentViewModel())
+                    ReservationsComponentView(viewModel: ReservationComponentViewModel(personalReservations: true))
                         .tabItem {
                             Label("Reservas".localized, systemImage: "calendar.badge.checkmark")
                         }

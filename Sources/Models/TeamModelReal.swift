@@ -64,6 +64,7 @@ struct UserID: Codable {
     let avatar: String?
     let id: String?
     let username: String?
+    let email: String?
 }
 
 struct TeamUser: Identifiable, Codable {
@@ -78,7 +79,7 @@ struct TeamUser: Identifiable, Codable {
 }
 
 struct TeamModelReal: Codable {
-    let applyMembership: Bool?
+    let applyMembership: Bool?//Int?
     let competitions: [TeamCompetition]?
     let dateEdited: String?
     let description: String?

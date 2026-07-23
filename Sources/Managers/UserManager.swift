@@ -175,17 +175,35 @@ class UserManager {
                     method: .POST,
                     body: userParams
                 )
-                
-                Logger.shared.log("Usuario actualizado: \(updatedUser)")
+                Logger.shared.log("Usuario registrado: \(updatedUser)")
                 self.user = updatedUser.data
                 completion(.success(()))
             } catch {
-                Logger.shared.log("Error al actualizar usuario: \(error)")
-                completion(.failure(error))
+                // If registration failed due to a duplicate DNI, retry without it
+                if userParams["dni"] != nil {
+                    Logger.shared.log("Registration failed, retrying without dni: \(error)")
+                    userParams.removeValue(forKey: "dni")
+                    do {
+                        let updatedUser: UserModelResponse = try await DirectusService.shared.sendRequest(
+                            endpoint: "users",
+                            method: .POST,
+                            body: userParams
+                        )
+                        Logger.shared.log("Usuario registrado sin DNI: \(updatedUser)")
+                        self.user = updatedUser.data
+                        completion(.success(()))
+                    } catch {
+                        Logger.shared.log("Error al registrar usuario: \(error)")
+                        completion(.failure(error))
+                    }
+                } else {
+                    Logger.shared.log("Error al registrar usuario: \(error)")
+                    completion(.failure(error))
+                }
             }
         }
     }
-    
+
     func registerUserIntoDatabase(email: String, userName: String, dni: String?, completion: @escaping (Result<Void, Error>) -> Void) {
         
         var userParams: [String: Any] = [
@@ -235,7 +253,7 @@ class UserManager {
     
     func fetchTeamsByUser(userId: String, completion: @escaping (Result<[TeamModelReal], Error>) -> Void) {
         let parameters = ["filter[users][users_id][_eq]": userId]
-        let fields = "id,name,description,picture,apply_membership,status,discord,users.roles.name,users.users_id.id,users.users_id.username,users.users_id.avatar, competitions.competitions_id,date_edited"
+        let fields = "id,name,description,picture,apply_membership,status,discord,users.roles.name,users.users_id.id,users.users_id.username,users.users_id.avatar,users.users_id.email,competitions.competitions_id,date_edited"
 
         Task {
             do {

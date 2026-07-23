@@ -68,7 +68,7 @@ extension IndividualReservationsCellComponent {
             
             Spacer()
             
-            if viewModel.showDeleteOption {
+            if viewModel.showDeleteAndEditOption {
                 Button {
                     action(.removeCell)
                 } label: {
@@ -94,12 +94,30 @@ extension IndividualReservationsCellComponent {
                         .scaledToFit()
                         .frame(height: 15)
                         .foregroundColor(.cyan)
-                    Text("Ver reserva".localized)
+                    Text("dashboard.profile.reserves.seeReserve".localized)
                         .font(.madridInGameiOSFont(size: 14))
                         .foregroundColor(.cyan)
                 }
             }
             Spacer()
+            
+//            if viewModel.showDeleteAndEditOption {
+//                Button {
+//                    action(.editBooking)
+//                } label: {
+//                    HStack {
+//                        Image(systemName: "pencil")
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(height: 12)
+//                            .foregroundColor(.red)
+//                        Text("Editar reserva".localized)
+//                            .font(.madridInGameiOSFont(size: 14))
+//                            .foregroundColor(.red)
+//                    }
+//                }
+//                Spacer()
+//            }
         }
         .padding(.top, 10)
     }
