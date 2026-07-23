@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.homepage     = 'https://github.com/korory/MadridInGameModule'
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = { 'Diverger Thinking' => 'arnau.rivas@diverger.ai' }
-  s.source       = { :git => 'https://github.com/korory/MadridInGameModule.git', :tag => s.version.to_s }
+  s.source       = { :git => 'https://github.com/DivergerThinking/mig_ios_module.git', :tag => s.version.to_s }
 
   s.ios.deployment_target = '16.0'
   s.source_files = 'Sources/**/*.{swift}'
