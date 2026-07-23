@@ -1,0 +1,15 @@
+# SwiftFormat — MadridInGameiOSModule
+--swiftversion 5.9
+
+# Reglas desactivadas para minimizar diff sobre código heredado
+--disable wrapMultilineStatementBraces,organizeDeclarations,extensionAccessControl
+
+# Estilo
+--indent 4
+--maxwidth 160
+--commas always
+--semicolons never
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-bottom
+--trimwhitespace always
