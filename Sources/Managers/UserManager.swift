@@ -82,6 +82,9 @@ class UserManager {
                                 completion(.failure(error))
                             }
                         }
+                    } else {
+                        // Sin else la completion no se llamaba nunca y la UI quedaba en loading infinito
+                        completion(.failure(NSError(domain: "MadridInGameiOSModule", code: 0, userInfo: [NSLocalizedDescriptionKey: "error.network.generic".localized])))
                     }
                 } else {
                     //completion(.failure(NSError(domain: "No User Found", code: 0, userInfo: nil)))
@@ -130,6 +133,9 @@ class UserManager {
                                 completion(.failure(error))
                             }
                         }
+                    } else {
+                        // Sin else la completion no se llamaba nunca y la UI quedaba en loading infinito
+                        completion(.failure(NSError(domain: "MadridInGameiOSModule", code: 0, userInfo: [NSLocalizedDescriptionKey: "error.network.generic".localized])))
                     }
                 } else {
                     //completion(.failure(NSError(domain: "No User Found", code: 0, userInfo: nil)))

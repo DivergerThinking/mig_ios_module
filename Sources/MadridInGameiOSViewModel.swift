@@ -60,7 +60,13 @@ class MadridInGameiOSViewModel: ObservableObject {
             await DirectusService.shared.configure(with: envManager)
         }
         FontManager().loadCustomFonts()
-        
+    }
+
+    /// Debe ejecutarse en onAppear, nunca durante el init: mutar la ventana
+    /// mientras SwiftUI construye la jerarquía inicial invalida la vista y
+    /// provoca que se cree un segundo ViewModel huérfano (loading infinito en iOS 26).
+    private func applyDarkModeOverride() {
+        guard originalStyle == nil else { return }
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             if let window = windowScene.windows.first {
                 self.originalStyle = window.overrideUserInterfaceStyle
@@ -68,8 +74,9 @@ class MadridInGameiOSViewModel: ObservableObject {
             }
         }
     }
-    
+
     func initializeModule() {
+        applyDarkModeOverride()
         TextContentService().fetchTextContent()
 
         userManager.initializeUser(userInfo: userInfo) { [weak self] result in
