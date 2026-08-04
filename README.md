@@ -5,17 +5,28 @@
 
 ## Requisitos
 
-- iOS 13.0 o superior
-- Swift 5.0 o superior
+- iOS 16.0 o superior
+- Swift 5.10 o superior
 
 ## Instalación
 
-### CocoaPods
+### Swift Package Manager (recomendado)
 
-Para integrar **MadridInGameiOSModule** en tu proyecto usando CocoaPods, añade la siguiente línea a tu `Podfile`:
+En Xcode: **File → Add Package Dependencies…** e introduce la URL del repositorio, o añádelo a tu `Package.swift`:
+
+```swift
+.package(
+    url: "https://github.com/DivergerThinking/mig_ios_module.git",
+    from: "1.1.0"
+)
+```
+
+### CocoaPods (hasta diciembre de 2026)
+
+Para integrar **MadridInGameiOSModule** usando CocoaPods, añade a tu `Podfile`:
 
 ```ruby
-pod 'MadridInGameiOSModule'
+pod 'MadridInGameiOSModule', :git => 'https://github.com/DivergerThinking/mig_ios_module.git', :tag => '1.1.0'
 ```
 
 Luego, ejecuta:
