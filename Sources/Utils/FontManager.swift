@@ -12,7 +12,9 @@ public class FontManager {
     func loadCustomFonts() {
         FontBlaster.debugEnabled = true
         
-        FontBlaster.blast() { fonts in
+        // Bundle.main no contiene la fuente ni bajo SPM ni bajo CocoaPods
+        // con resource_bundles: hay que escanear el bundle de recursos del SDK.
+        FontBlaster.blast(bundle: .podBundle ?? .main) { fonts in
             Logger.shared.log(fonts.joined(separator: "\n"))
         }
     }

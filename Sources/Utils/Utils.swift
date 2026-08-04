@@ -124,12 +124,19 @@ extension Date {
 }
 
 extension Bundle {
+    /// Resource bundle of the SDK, valid for both distribution channels:
+    /// SPM exposes resources via `Bundle.module`; CocoaPods via the
+    /// `resource_bundles` bundle nested in the framework.
     static var podBundle: Bundle? = {
+        #if SWIFT_PACKAGE
+        return Bundle.module
+        #else
         let podBundle = Bundle(for: MadridInGameiOSViewModel.self)
         if let url = podBundle.url(forResource: "MadridInGameiOSModule", withExtension: "bundle") {
             return Bundle(url: url)
         }
         return nil
+        #endif
     }()
 
     /// Returns the .lproj bundle matching the device language:
