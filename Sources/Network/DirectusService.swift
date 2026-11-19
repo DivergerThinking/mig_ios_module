@@ -68,75 +68,16 @@ actor DirectusService {
 
     // MARK: - Generic Fetch Function
     public func request<T: Decodable>(endpoint: String, method: HTTPMethods, parameters: [String: String]? = nil, body: [String: Any]? = nil) async throws -> T {
-        guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty else {
-            throw NetworkError.invalidURL
-        }
-
-        var fullURLString = "\(baseURL)/items/\(endpoint)"
-        if let parameters = parameters, !parameters.isEmpty {
-            let queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
-            var urlComponents = URLComponents(string: fullURLString)
-            urlComponents?.queryItems = queryItems
-            fullURLString = urlComponents?.url?.absoluteString ?? fullURLString
-        }
-
-        guard let url = URL(string: fullURLString) else {
-            throw NetworkError.invalidURL
-        }
-        
-        Logger.shared.log("🛜 Endpoint request: \(url.absoluteString)")
-
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        let accesToken = UserDefaults.getAccessTokenKey() ?? ""
-        let token = "Bearer \(accesToken)"
-        request.setValue(token, forHTTPHeaderField: "Authorization")
-
-        if let body = body {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-            
-            if let jsonData = try? JSONSerialization.data(withJSONObject: body),
-               let jsonString = String(data: jsonData, encoding: .utf8) {
-                Logger.shared.log("Cuerpo de la petición JSON: \(jsonString)")
-            }
-        }
-        
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-//        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-//            throw NetworkError.invalidResponse
-//        }
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-
-        if !(200...299).contains(httpResponse.statusCode) {
-            let responseData = String(data: data, encoding: .utf8) ?? "No se pudo leer la respuesta"
-            Logger.shared.log("Error HTTP: \(httpResponse.statusCode) - Respuesta: \(responseData)")
-            throw NetworkError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                Logger.shared.log("Datos JSON (sin decodificar): \(jsonResponse)")
-            } else {
-                Logger.shared.log("La respuesta no es un [String: Any]")
-            }
-        } catch {
-            Logger.shared.log("Error al deserializar JSON: \(error.localizedDescription)")
-        }
-
-
+        let url = try itemsURL(endpoint: endpoint, parameters: parameters ?? [:])
+        let data = try await send(url: url, method: method, body: body)
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
+            Logger.shared.log("Decoding error on \(method.rawValue) \(url.path)")
             throw NetworkError.decodingError
         }
     }
-    
+
     // MARK: - Generic Send Function (POST, PATCH, PUT)
     public func sendRequest<T: Decodable>(
         endpoint: String,
@@ -145,7 +86,6 @@ actor DirectusService {
     ) async throws -> T {
         return try await request(endpoint: endpoint, method: method, body: body)
     }
-    
 
     public func request(
         endpoint: String,
@@ -153,50 +93,8 @@ actor DirectusService {
         parameters: [String: Any] = [:],
         body: [String: Any] = [:]
     ) async throws -> Data? {
-        // Construcción de la URL con los parámetros de la consulta (query parameters)
-        guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty else {
-            throw NetworkError.invalidURL
-        }
-        
-        var fullURLString = "\(baseURL)/items/\(endpoint)"
-
-        var urlComponents = URLComponents(string: fullURLString)
-        fullURLString = urlComponents?.url?.absoluteString ?? fullURLString
-    
-        
-        if !parameters.isEmpty {
-            urlComponents?.queryItems = parameters.map { key, value in
-                URLQueryItem(name: key, value: "\(value)")
-            }
-        }
-        
-        // Crear la URL a partir de los componentes
-        guard let url = urlComponents?.url else {
-            throw URLError(.badURL)
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        let accesToken = UserDefaults.getAccessTokenKey() ?? ""
-        let token = "Bearer \(accesToken)"
-        request.setValue(token, forHTTPHeaderField: "Authorization")
-        
-        // Agregar el cuerpo (body) si se necesita
-        if !body.isEmpty {
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-        }
-        
-        // Realizar la solicitud y esperar la respuesta
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        // Verificar el código de estado de la respuesta (opcional)
-        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
-            throw URLError(.badServerResponse)
-        }
-        
-        // Retornar los datos sin decodificar
-        return data
+        let url = try itemsURL(endpoint: endpoint, parameters: parameters.mapValues { "\($0)" })
+        return try await send(url: url, method: method, body: body.isEmpty ? nil : body)
     }
 
     public func sendRequestWithoutDecode(
@@ -206,44 +104,44 @@ actor DirectusService {
     ) async throws {
         _ = try await request(endpoint: endpoint, method: method, body: body)
     }
-    
+
     // MARK: - Trigger Flow (Webhook)
     public func triggerFlow(flowId: String, body: [String: Any]) async throws {
-       guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty else {
-           throw NetworkError.invalidURL
-       }
+        guard let baseURL = environmentManager?.getBaseURL(),
+              let url = URL(string: "\(baseURL)/flows/trigger/\(flowId)") else {
+            throw NetworkError.invalidURL
+        }
+        _ = try await send(url: url, method: .POST, body: body)
+    }
 
-       let fullURLString = "\(baseURL)/flows/trigger/\(flowId)"
+    // MARK: - Private
 
-       guard let url = URL(string: fullURLString) else {
-           throw NetworkError.invalidURL
-       }
+    private func itemsURL(endpoint: String, parameters: [String: String]) throws -> URL {
+        guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty,
+              var components = URLComponents(string: "\(baseURL)/items/\(endpoint)") else {
+            throw NetworkError.invalidURL
+        }
+        if !parameters.isEmpty {
+            components.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        guard let url = components.url else { throw NetworkError.invalidURL }
+        return url
+    }
 
-       Logger.shared.log("🛜 Flow trigger: \(url.absoluteString)")
-
-       var request = URLRequest(url: url)
-       request.httpMethod = HTTPMethods.POST.rawValue
-       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-       let accessToken = UserDefaults.getAccessTokenKey() ?? ""
-       request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-
-       request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-       let (data, response) = try await URLSession.shared.data(for: request)
-
-       guard let httpResponse = response as? HTTPURLResponse else {
-           throw NetworkError.invalidResponse
-       }
-
-       if !(200...299).contains(httpResponse.statusCode) {
-           let responseData = String(data: data, encoding: .utf8) ?? "No se pudo leer la respuesta"
-           Logger.shared.log("Error HTTP flow trigger: \(httpResponse.statusCode) - \(responseData)")
-           throw NetworkError.invalidResponse
-       }
-
-       Logger.shared.log("Flow trigger ejecutado correctamente")
-   }
+    /// Every call goes through the gateway client: session cookie, Origin, 401 renewal.
+    private func send(url: URL, method: HTTPMethods, body: [String: Any]?) async throws -> Data {
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        if let body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        }
+        let (data, response) = try await MIGHTTPClient.shared.send(request)
+        guard (200...299).contains(response.statusCode) else {
+            throw NetworkError.serverError(statusCode: response.statusCode)
+        }
+        return data
+    }
 }
 
 

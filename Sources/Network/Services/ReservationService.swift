@@ -161,7 +161,7 @@ class ReservationService {
                     body: reservationDict
                 )
                 if reserveResponseModel.data.id != 0 {
-                    Logger.shared.log("Reserva registrada con éxito: \(reserveResponseModel.data)")
+                    Logger.shared.log("Reserva registrada con éxito")
                     completion(.success(reserveResponseModel.data))
                 } else {
                     Logger.shared.log("Error: No se recibieron datos válidos.")
@@ -198,7 +198,7 @@ class ReservationService {
                     method: .POST,
                     body: body
                 )
-                Logger.shared.log("Training creado con éxito: \(response.data)")
+                Logger.shared.log("Training creado con éxito")
                 completion(.success(response.data))
             } catch {
                 Logger.shared.log("Error al crear el training: \(error)")
@@ -316,7 +316,7 @@ class ReservationService {
                     method: .PATCH,
                     body: body
                 )
-                Logger.shared.log("Training actualizado con éxito: \(response.data)")
+                Logger.shared.log("Training actualizado con éxito")
                 completion(.success(response.data))
             } catch {
                 Logger.shared.log("Error al actualizar el training: \(error)")
@@ -346,7 +346,7 @@ class ReservationService {
                 )
 
                 if reserveResponseModel.data.id != 0 {
-                    Logger.shared.log("Reserva actualizada con éxito: \(reserveResponseModel.data)")
+                    Logger.shared.log("Reserva actualizada con éxito")
                     completion(.success(reserveResponseModel.data))
                 } else {
                     Logger.shared.log("Error: No se recibieron datos válidos.")

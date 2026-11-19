@@ -23,11 +23,17 @@ let package = Package(
                 // Huérfano no distribuido por CocoaPods (resource_bundles solo
                 // empaqueta Resources/ de la raíz); se excluye para mantener paridad.
                 "Sources/Resources",
+                "Tests",
             ],
             sources: ["Sources"],
             resources: [
                 .process("Resources"),
             ]
+        ),
+        .testTarget(
+            name: "MadridInGameiOSModuleTests",
+            dependencies: ["MadridInGameiOSModule"],
+            path: "Tests/MadridInGameiOSModuleTests"
         ),
     ]
 )

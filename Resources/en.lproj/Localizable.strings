@@ -639,3 +639,11 @@
 "competitions.details.cards.participation.title" = "Participation";
 "competitions.details.cards.participation.description" = "The league is open to players of all skill levels.";
 
+
+/* Auth B2C session */
+"auth.session_expired" = "Your session has expired. Please sign in again in the app.";
+"auth.identity_link_required" = "Your account needs to be verified. Please contact Madrid in Game support.";
+"auth.forbidden" = "You don't have permission to do this.";
+"auth.service_unavailable" = "The service is temporarily unavailable. Please try again in a few minutes.";
+"common.retry" = "Retry";
+"common.close" = "Close";

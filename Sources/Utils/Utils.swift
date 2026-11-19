@@ -59,12 +59,9 @@ extension UserDefaults {
         static let qrMiddleLogo = "qrMiddleLogo"
     }
 
-    static func saveAccessTokenKey(_ accessToken: String) {
-        UserDefaults.standard.set(accessToken, forKey: Constants.accessTokenKey)
-    }
-    
-    static func getAccessTokenKey() -> String? {
-        return UserDefaults.standard.string(forKey: Constants.accessTokenKey)
+    /// Versions ≤ 1.x stored the Directus token in plain UserDefaults (IOS-SEC-1). Wipe it.
+    static func removeLegacyAccessToken() {
+        UserDefaults.standard.removeObject(forKey: Constants.accessTokenKey)
     }
     
     static func saveLogoMIG(_ image: UIImage) {

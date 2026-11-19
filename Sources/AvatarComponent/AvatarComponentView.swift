@@ -112,24 +112,24 @@ struct NonCachedAsyncImage<Placeholder: View, ErrorView: View, Content: View>: V
             request.cachePolicy = .reloadIgnoringCacheData
         }
 
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            DispatchQueue.main.async {
+        // Through the SDK client: private avatars need the member session cookie.
+        Task {
+            let image: UIImage?
+            do {
+                let (data, response) = try await MIGHTTPClient.shared.send(request)
+                image = (200...299).contains(response.statusCode) ? UIImage(data: data) : nil
+            } catch {
+                image = nil
+            }
+            await MainActor.run {
                 isLoading = false
-
-                if let _ = error {
+                if let image {
+                    loadedImage = Image(uiImage: image)
+                } else {
                     hasError = true
-                    return
                 }
-
-                guard let data = data, let uiImage = UIImage(data: data) else {
-                    hasError = true
-                    return
-                }
-
-                loadedImage = Image(uiImage: uiImage)
             }
         }
-        .resume()
     }
 }
 

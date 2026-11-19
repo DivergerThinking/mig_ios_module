@@ -128,7 +128,7 @@ struct DetailsTournamentView: View {
         if let email = user?.email { body["email"] = email }
 
         Logger.shared.log("[TournamentInscription] Sending POST to tournament_inscriptions")
-        Logger.shared.log("[TournamentInscription] Body: \(body)")
+        Logger.shared.log("[TournamentInscription] sending inscription")
 
         isSubmitting = true
         Task {

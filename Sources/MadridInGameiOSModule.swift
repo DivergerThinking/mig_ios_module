@@ -7,33 +7,44 @@ public struct MadridInGameiOSModule: View {
     @StateObject private var viewModel: MadridInGameiOSViewModel
     @Environment(\.presentationMode) var presentationMode
     
-    public init(_ model: MadridInGameUserData, isPreRelease: Bool = false) {
-        UserDefaults.saveAccessTokenKey(model.accessToken)
-        if let logo = model.logoMIG {
-            UserDefaults.saveLogoMIG(logo)
-        }
-        if let logo = model.qrMiddleLogo {
-            UserDefaults.saveQrMiddleLogo(logo)
-        }
-        
-        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(userInfo: model, isPro: !isPreRelease, openCompetitions: false))
-    }
-
-    public init(email: String, userName: String, dni: String? = nil, accessToken: String, logoMIG: UIImage?, qrMiddleLogo: UIImage?, isPreRelease: Bool = false) {
-        UserDefaults.saveAccessTokenKey(accessToken)
-
+    /// Opens the Madrid in Game esports module for the user signed in on the host app.
+    ///
+    /// The SDK exchanges `idToken` for a web session and, when that session expires, calls
+    /// `idTokenProvider` to get a fresh token. The user's identity (email, name, DNI…) comes
+    /// from that session, so the host does not pass it.
+    ///
+    /// ```swift
+    /// MadridInGameiOSModule(
+    ///     idToken: result.idToken,
+    ///     idTokenProvider: { forceRefresh in try await auth.idToken(forceRefresh: forceRefresh) }
+    /// )
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - idToken: Azure AD B2C `id_token` of the current MSAL session, unmodified.
+    ///   - idTokenProvider: Called by the SDK when it needs a new `id_token`. Throw if the user must sign in again.
+    ///   - logoMIG: Logo shown in the module header.
+    ///   - qrMiddleLogo: Image drawn in the middle of reservation QR codes.
+    ///   - isPreRelease: `true` to use the PRE environment.
+    public init(idToken: String,
+                idTokenProvider: @escaping MIGIdTokenProvider,
+                logoMIG: UIImage? = nil,
+                qrMiddleLogo: UIImage? = nil,
+                isPreRelease: Bool = false) {
         if let logo = logoMIG {
             UserDefaults.saveLogoMIG(logo)
         }
         if let logo = qrMiddleLogo {
             UserDefaults.saveQrMiddleLogo(logo)
         }
-
-        let userInfo = MadridInGameUserData(name: nil, lastName: nil, userName: userName, email: email, dni: dni, phone: nil, accessToken: accessToken, logoMIG: logoMIG, qrMiddleLogo: qrMiddleLogo)
-        
-        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(userInfo: userInfo, isPro: !isPreRelease, openCompetitions: false))
+        _viewModel = StateObject(wrappedValue: MadridInGameiOSViewModel(
+            idToken: idToken,
+            idTokenProvider: idTokenProvider,
+            isPro: !isPreRelease,
+            openCompetitions: false
+        ))
     }
-    
+
     public var body: some View {
         ZStack {
             LinearGradient(gradient: Gradient(colors: [Color.black, Color.black, Color.black, Color.black.opacity(0.9)]), startPoint: .top, endPoint: .bottom)
@@ -41,8 +52,8 @@ public struct MadridInGameiOSModule: View {
             
             if viewModel.isLoading {
                 LoadingView(message: "Preparando tu experiencia...".localized)
-            } else if let errorMessage = viewModel.errorMessage {
-                errorView(errorMessage)
+            } else if let error = viewModel.error {
+                errorView(error)
             } else if let user = viewModel.user {
                 contentView(user: user)
             }
@@ -55,16 +66,25 @@ public struct MadridInGameiOSModule: View {
         }
     }
     
-    private func errorView(_ message: String) -> some View {
-        VStack {
+    private func errorView(_ error: MIGAuthError) -> some View {
+        VStack(spacing: 12) {
             Text("Error al cargar el módulo".localized)
                 .foregroundColor(.red)
-            Text(message)
+            Text(error.localizedMessage)
                 .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            HStack(spacing: 16) {
+                if error.isRetryable {
+                    Button("common.retry".localized) { viewModel.retry() }
+                        .foregroundColor(.cyan)
+                }
+                Button("common.close".localized) { presentationMode.wrappedValue.dismiss() }
+                    .foregroundColor(.white)
+            }
         }
         .padding()
     }
-    
+
     private func contentView(user: UserModel) -> some View {
         VStack {
             topBarView

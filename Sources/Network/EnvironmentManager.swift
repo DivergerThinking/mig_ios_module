@@ -18,14 +18,25 @@ public class EnvironmentManager {
             self = isPro ? .pro : .pre
         }
         
-        // Método para obtener la URL del entorno
-        public func getBaseURL() -> String {
+        /// Web origin. Also the value of the `Origin` header required on mutations.
+        public var origin: String {
             switch self {
             case .pre:
-                return "https://premig.randomkesports.com/cms"
+                return "https://premig.randomkesports.com"
             case .pro:
-                return "https://webesports.madridingame.es/cms"
+                return "https://webesports.madridingame.es"
             }
+        }
+
+        /// Base of the web data gateway: append `/items/...`, `/assets/<id>`, `/files` or
+        /// `/flows/trigger/<id>`. Direct Directus access (`/cms`) is closed since 2026-09.
+        public func getBaseURL() -> String {
+            "\(origin)/api/data"
+        }
+
+        /// `POST|GET|DELETE` of the member session.
+        public var sessionURL: String {
+            "\(origin)/api/member/session/"
         }
         
         // Método para obtener el nombre del entorno (PRE / PRO)
@@ -66,6 +77,10 @@ public class EnvironmentManager {
     public func getEnvironmentName() -> String {
         return currentEnvironment.getEnvironmentName()
     }
+
+    public func getOrigin() -> String {
+        return currentEnvironment.origin
+    }
     
     // MARK: - Métodos Privados (Almacenamiento en UserDefaults)
     private static func saveEnvironment(_ isPro: Bool) {
@@ -74,6 +89,17 @@ public class EnvironmentManager {
     
     private static func loadEnvironment() -> Bool? {
         return UserDefaults.standard.value(forKey: environmentKey) as? Bool
+    }
+}
+
+/// Environment selected at module launch. Set once by the module, read by the HTTP client.
+enum MIGEnvironment {
+    private static let lock = NSLock()
+    private static var configured: EnvironmentManager.EnvironmentConfig = .pro
+
+    static var current: EnvironmentManager.EnvironmentConfig {
+        get { lock.lock(); defer { lock.unlock() }; return configured }
+        set { lock.lock(); configured = newValue; lock.unlock() }
     }
 }
 

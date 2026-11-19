@@ -235,7 +235,7 @@ struct DetailsRulesView: View {
         isDownloading = true
         defer { isDownloading = false }
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await MIGHTTPClient.shared.send(URLRequest(url: url))
             let filename = (response.suggestedFilename ?? "rules.pdf")
             let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
             try data.write(to: tmpURL)
@@ -288,7 +288,7 @@ private struct PDFReaderView: View {
 
     private func loadPDF() async {
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await MIGHTTPClient.shared.send(URLRequest(url: url))
             if let doc = PDFDocument(data: data) {
                 pdfDocument = doc
             } else {

@@ -639,3 +639,11 @@
 "competitions.details.cards.participation.title" = "Participación";
 "competitions.details.cards.participation.description" = "La liga está abierta a jugadores de todos los niveles.";
 
+
+/* Auth B2C session */
+"auth.session_expired" = "Tu sesión ha caducado. Vuelve a iniciar sesión en la app.";
+"auth.identity_link_required" = "Tu cuenta necesita una verificación. Contacta con el soporte de Madrid in Game.";
+"auth.forbidden" = "No tienes permiso para realizar esta acción.";
+"auth.service_unavailable" = "El servicio no está disponible temporalmente. Inténtalo de nuevo en unos minutos.";
+"common.retry" = "Reintentar";
+"common.close" = "Cerrar";

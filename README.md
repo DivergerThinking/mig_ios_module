@@ -37,91 +37,43 @@ pod install
 
 ### Uso
 
-### Importar el módulo
-Para comenzar a usar MadridInGameiOSModule, importa el módulo en tu archivo Swift:
-
 ```swift
 import MadridInGameiOSModule
 ```
 
-
-### Ejemplo básico
-
-#### Instanciar el modulo
+Desde la versión **2.0.0** el módulo se autentica con el **`id_token` de Azure AD B2C** de la sesión que ya tiene la app (MSAL). El módulo abre con él su propia sesión segura en el servidor de Madrid in Game y, cuando caduca (1 h), pide un token nuevo a la app mediante `idTokenProvider`. La app **no** pasa email, DNI ni nombre: la identidad sale del token validado en el servidor.
 
 ```swift
-struct ContentView: View {
+struct EsportsView: View {
+    let idToken: String        // MSALResult.idToken de la sesión actual
+    let auth: AuthService      // vuestro wrapper de MSAL
+
     var body: some View {
-      
-        // Opción 1: Inicializar usando la estructura [translate:MadridInGameModel]
-        let model = MadridInGameModel(
-            name: "Nombre",
-            lastName: "Apellido",
-            userName: "Test",
-            email: "test@test.com",
-            dni: "00000000R",
-            phone: "600000000",
-            accessToken: "El Token de Acceso",
-            logoMIG: logoMIG,
-            qrMiddleLogo: qrMiddleLogo
-        )
-        
-        // Lanzar el módulo usando el objeto model
-        MadridInGameiOSModule(model)
-        
-        // Opción 2: Inicializar el módulo pasando los parámetros individualmente
         MadridInGameiOSModule(
-            email: "test@test.com",
-            userName: "Test",
-            dni: "00000000R",
-            accessToken: "El Token de Acceso",
-            logoMIG: logoMIG,
-            qrMiddleLogo: qrMiddleLogo
+            idToken: idToken,
+            idTokenProvider: { forceRefresh in
+                // acquireTokenSilent(forceRefresh:) y devolver result.idToken.
+                // Lanzad un error si el usuario tiene que volver a iniciar sesión.
+                try await auth.silentIdToken(forceRefresh: forceRefresh)
+            },
+            logoMIG: UIImage(named: "logo_mig"),
+            qrMiddleLogo: UIImage(named: "qr_middle_logo")
         )
     }
 }
 ```
 
-### Parámetros de MadridInGameiOSModule (Todos obligatorios*)
+### Parámetros
 
-- **email: String**
-El correo electrónico del usuario.
-- **userName: String**
-El nombre de usuario.
-- **dni: String**
-El DNI o documento de identidad nacional del usuario.
-- **accessToken: String**
-El token de acceso utilizado para la autenticación.
-- **logoMIG: UIImage**
-El logo de la aplicación que se mostrará o usará. Debe pasarse como un objeto `UIImage`.
-- **qrMiddleLogo: UIImage**
-Un logo adicional que aparecerá centrado en el código QR. También debe pasarse como un objeto `UIImage`.
+- **idToken: String** — `id_token` de B2C de la sesión actual, sin modificar.
+- **idTokenProvider: (Bool) async throws -> String** — el módulo lo llama cuando necesita un token nuevo. Con `forceRefresh == true` el anterior fue rechazado: pedid uno nuevo a MSAL. Si MSAL requiere interacción, lanzad un error y el módulo mostrará «sesión caducada» (sin bucles).
+- **logoMIG: UIImage?** — logo mostrado en la cabecera.
+- **qrMiddleLogo: UIImage?** — logo centrado en los códigos QR de las reservas.
+- **isPreRelease: Bool** — `true` para el entorno PRE (por defecto `false`, PRO).
 
+### Migración desde 1.x
 
-### Parámetros del modelo MadridInGameModel (Todos opcionales excepto los indicados)
-
-- **name: String?**
-El nombre del usuario.
-- **lastName: String?**
-El apellido del usuario.
-- **userName: String**
-El nombre de usuario.
-- **email: String**
-El correo electrónico del usuario.
-- **dni: String?**
-El DNI o documento de identidad del usuario.
-- **phone: String?**
-El teléfono de contacto del usuario.
-- **accessToken: String**
-El token de acceso para la autenticación.
-- **logoMIG: UIImage?**
-El logo de la aplicación que se mostrará o usará.
-- **qrMiddleLogo: UIImage?**
-Un logo adicional que aparecerá centrado en el código QR.
-
-### Notas
-
-- Puede inicializar el módulo pasando una instancia completa de MadridInGameModel o proporcionando cada parámetro por separado.
+`init(_ model:)`, `init(email:userName:dni:accessToken:…)` y `MadridInGameUserData` se han eliminado: el token estático de Directus ya no es válido. Sustituid la llamada por el inicializador anterior.
 
 ## Licencia
 
