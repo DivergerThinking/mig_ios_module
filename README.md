@@ -17,7 +17,7 @@ En Xcode: **File → Add Package Dependencies…** e introduce la URL del reposi
 ```swift
 .package(
     url: "https://github.com/DivergerThinking/mig_ios_module.git",
-    from: "1.1.0"
+    from: "2.0.0"
 )
 ```
 
@@ -26,7 +26,7 @@ En Xcode: **File → Add Package Dependencies…** e introduce la URL del reposi
 Para integrar **MadridInGameiOSModule** usando CocoaPods, añade a tu `Podfile`:
 
 ```ruby
-pod 'MadridInGameiOSModule', :git => 'https://github.com/DivergerThinking/mig_ios_module.git', :tag => '1.1.0'
+pod 'MadridInGameiOSModule', :git => 'https://github.com/DivergerThinking/mig_ios_module.git', :tag => '2.0.0'
 ```
 
 Luego, ejecuta:
