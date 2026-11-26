@@ -124,7 +124,7 @@ private struct CompetitionCardView: View {
     @ViewBuilder
     private var gameImage: some View {
         if let imageId = competition.image ?? competition.game?.image {
-            AsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(imageId)")) { phase in
+            MIGAsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(imageId)")) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()

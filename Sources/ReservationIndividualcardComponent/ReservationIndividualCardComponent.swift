@@ -222,11 +222,11 @@ extension ReservationIndividualCardComponent {
         if let qrValue = viewModel.reservation.qrImage {
             let environmentManager = EnvironmentManager()
             return AnyView(
-                AsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(qrValue)")) { phase in
+                MIGAsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(qrValue)")) { phase in
                     switch phase {
                     case .empty:
                         VStack {
-                            Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!)
+                            Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage())
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 100, height: 50)
@@ -287,7 +287,7 @@ extension ReservationIndividualCardComponent {
             switch phase {
             case .empty:
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage())
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 50)

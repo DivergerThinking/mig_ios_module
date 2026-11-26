@@ -73,7 +73,7 @@ extension TeamReservationCellComponentView {
                     ForEach(viewModel.getAllPlayers()) { player in
                         VStack {
                             if let avatar = player.userId?.avatar, !avatar.isEmpty {
-                                AsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(avatar)")) { phase in
+                                MIGAsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(avatar)")) { phase in
                                     switch phase {
                                     case .empty:
                                         ProgressView()

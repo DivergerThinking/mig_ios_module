@@ -41,7 +41,7 @@ extension SelectTeamsCellComponent {
         
         if let pictureId = team.picture {
             return AnyView(
-                AsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(pictureId)")) { phase in
+                MIGAsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(pictureId)")) { phase in
                     switch phase {
                     case .empty:
                         ProgressView()

@@ -14,22 +14,23 @@ struct SendImageResponse: Codable {
 }
 
 // Modelo que representa los datos de la imagen subida
+/// The web gateway returns only id, type, filename_download, width, height and filesize: everything but `id` is optional.
 struct FileData: Codable {
     let id: String
-    let storage: String
-    let filenameDisk: String
-    let filenameDownload: String
-    let title: String
-    let type: String
+    let storage: String?
+    let filenameDisk: String?
+    let filenameDownload: String?
+    let title: String?
+    let type: String?
     let folder: String?
-    let uploadedBy: String
-    let uploadedOn: String
+    let uploadedBy: String?
+    let uploadedOn: String?
     let modifiedBy: String?
     let modifiedOn: String?
     let charset: String?
-    let filesize: String
-    let width: Int
-    let height: Int
+    let filesize: String?
+    let width: Int?
+    let height: Int?
     let duration: Int?
     let embed: String?
     let description: String?

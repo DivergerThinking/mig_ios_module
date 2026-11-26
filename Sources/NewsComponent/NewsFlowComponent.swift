@@ -79,7 +79,7 @@ extension NewsFlowComponent {
         let environmentManager = EnvironmentManager()
         
         return AnyView(
-            AsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(newsImage ?? "")")) { phase in
+            MIGAsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(newsImage ?? "")")) { phase in
                 switch phase {
                 case .empty:
                     VStack {

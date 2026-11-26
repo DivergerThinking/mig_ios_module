@@ -117,7 +117,7 @@ struct CompetitionsDetailViewComponentView: View {
 
                 // Banner image
                 if let url = bannerURL, !bannerPath.isEmpty {
-                    AsyncImage(url: url) { phase in
+                    MIGAsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
                             image

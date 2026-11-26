@@ -224,11 +224,11 @@ extension ReservationCardComponent {
     private func imageReservationQr(_ imageSize: CGFloat) -> some View {
         if let qrImage = viewModel.myReserve?.qrImage {
             return AnyView(
-                AsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(qrImage)")) { phase in
+                MIGAsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(qrImage)")) { phase in
                     switch phase {
                     case .empty:
                         VStack {
-                            Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!)
+                            Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage())
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 100, height: 50)
@@ -284,7 +284,7 @@ extension ReservationCardComponent {
             switch phase {
             case .empty:
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage())
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 50)
@@ -328,7 +328,7 @@ extension ReservationCardComponent {
                     ForEach(viewModel.getAllPlayers()) { player in
                         VStack {
                             if let avatar = player.userId?.avatar, !avatar.isEmpty {
-                                AsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(avatar)")) { phase in
+                                MIGAsyncImage(url: URL(string: "\(viewModel.environmentManager.getBaseURL())/assets/\(avatar)")) { phase in
                                     switch phase {
                                     case .empty:
                                         ProgressView()

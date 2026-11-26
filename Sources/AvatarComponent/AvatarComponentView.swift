@@ -21,7 +21,7 @@ struct AvatarComponentView: View {
     @ViewBuilder
     private var loadImageView: some View {
         if let imageId {
-            AsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(imageId)")) { phase in
+            MIGAsyncImage(url: URL(string: "\(environmentManager.getBaseURL())/assets/\(imageId)")) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()

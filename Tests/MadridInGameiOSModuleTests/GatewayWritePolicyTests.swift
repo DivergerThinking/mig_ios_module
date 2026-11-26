@@ -49,3 +49,11 @@ final class GatewayWritePolicyTests: XCTestCase {
         XCTAssertEqual(decoded.data.qrValue, "q")
     }
 }
+
+final class UploadResponseTests: XCTestCase {
+    func testFileUploadResponseFromTheGatewayDecodes() throws {
+        let json = #"{"data":{"id":"0a8e3834-77b1-4e67-821c-a5bbe1ad6449","type":"image/jpeg","filename_download":"test-qr.jpeg","width":64,"height":64,"filesize":"1825"}}"#
+        let decoded = try JSONDecoder().decode(SendImageResponse.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.data.id, "0a8e3834-77b1-4e67-821c-a5bbe1ad6449")
+    }
+}

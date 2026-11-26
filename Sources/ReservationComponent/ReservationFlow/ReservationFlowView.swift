@@ -318,7 +318,7 @@ struct SelectDateView: View {
                 }
                 if viewModel.isLoading {
                     VStack {
-                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                         Text("Cargando fechas disponibles...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                     }.frame(maxWidth: .infinity, maxHeight: .infinity).onAppear { viewModel.getBlockedDays() }
@@ -396,7 +396,7 @@ struct SelectSlotView: View {
         VStack(alignment: .leading, spacing: 12) {
             if viewModel.isCreatingReservation {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Creando la reserva...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -405,7 +405,7 @@ struct SelectSlotView: View {
 
                 if viewModel.availableSlots.isEmpty || viewModel.isLoadingOccupancy {
                     VStack {
-                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                         Text("Cargando horarios disponibles...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -468,7 +468,7 @@ struct AskSimulatorView: View {
         VStack(spacing: 24) {
             if viewModel.isCreatingReservation {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Creando la reserva...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -543,7 +543,7 @@ struct SelectSimulatorSlotView: View {
         VStack(alignment: .leading, spacing: 12) {
             if viewModel.isCreatingReservation {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Creando la reserva...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -553,7 +553,7 @@ struct SelectSimulatorSlotView: View {
 
                 if viewModel.availableSimulatorSlots.isEmpty || viewModel.isLoadingSimulatorOccupancy {
                     VStack {
-                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                         Text("Cargando horarios de simulador...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -608,7 +608,7 @@ struct AskExtraSpaceView: View {
         VStack(spacing: 24) {
             if viewModel.isCreatingReservation {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Creando la reserva...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -682,7 +682,7 @@ struct SelectExtraSpaceView: View {
 
             if viewModel.nonSimulatorSpaces.isEmpty {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Cargando espacios disponibles...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -727,7 +727,7 @@ struct SelectExtraSlotView: View {
         VStack(alignment: .leading, spacing: 12) {
             if viewModel.isCreatingReservation {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Creando la reserva...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -742,7 +742,7 @@ struct SelectExtraSlotView: View {
 
                 if viewModel.availableExtraSpaceSlots.isEmpty || viewModel.isLoadingExtraSpaceOccupancy {
                     VStack {
-                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                        Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                         Text("Cargando horarios disponibles...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -795,7 +795,7 @@ struct SelectSpaceView: View {
             Text("Selecciona un espacio".localized).font(.madridInGameiOSFont(size: 20)).foregroundColor(.white)
             if viewModel.availableSpaces.isEmpty {
                 VStack {
-                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage(systemName: "")!).resizable().scaledToFit().frame(width: 100, height: 50)
+                    Image(uiImage: UserDefaults.getLogoMIG() ?? UIImage()).resizable().scaledToFit().frame(width: 100, height: 50)
                     ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .purple)).scaleEffect(1.5).padding()
                     Text("Cargando espacios disponibles...".localized).font(.madridInGameiOSFont(size: 14)).foregroundColor(.white.opacity(0.5))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity).onAppear { viewModel.fetchAvailableSpaces() }
