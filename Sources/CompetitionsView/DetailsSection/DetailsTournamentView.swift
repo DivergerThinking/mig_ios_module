@@ -118,9 +118,9 @@ struct DetailsTournamentView: View {
 
     private func submitInscriptionAndOpen() {
         let user = UserManager.shared.getUser()
+        // The gateway accepts id_user, id_team, id_tournament, alias, email (it sets the status).
         var body: [String: Any] = [
-            "alias": nickname,
-            "status": "published"
+            "alias": nickname
         ]
         if let userId = user?.id { body["id_user"] = userId }
         if let tournamentId = selectedTournamentId { body["id_tournament"] = tournamentId }

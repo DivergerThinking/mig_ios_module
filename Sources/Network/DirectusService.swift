@@ -69,7 +69,7 @@ actor DirectusService {
     // MARK: - Generic Fetch Function
     public func request<T: Decodable>(endpoint: String, method: HTTPMethods, parameters: [String: String]? = nil, body: [String: Any]? = nil) async throws -> T {
         let url = try itemsURL(endpoint: endpoint, parameters: parameters ?? [:])
-        let data = try await send(url: url, method: method, body: body)
+        let data = try await send(url: url, method: method, body: body.map { sanitized($0, endpoint: endpoint, method: method) })
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
@@ -94,7 +94,7 @@ actor DirectusService {
         body: [String: Any] = [:]
     ) async throws -> Data? {
         let url = try itemsURL(endpoint: endpoint, parameters: parameters.mapValues { "\($0)" })
-        return try await send(url: url, method: method, body: body.isEmpty ? nil : body)
+        return try await send(url: url, method: method, body: body.isEmpty ? nil : sanitized(body, endpoint: endpoint, method: method))
     }
 
     public func sendRequestWithoutDecode(
@@ -115,6 +115,15 @@ actor DirectusService {
     }
 
     // MARK: - Private
+
+    private func sanitized(_ body: [String: Any], endpoint: String, method: HTTPMethods) -> [String: Any] {
+        guard let collection = GatewayWritePolicy.collection(ofEndpoint: endpoint) else { return body }
+        let result = GatewayWritePolicy.sanitize(collection: collection, method: method.rawValue, body: body)
+        if !result.removed.isEmpty {
+            Logger.shared.log("Dropped fields not accepted by the gateway on \(method.rawValue) \(collection): \(result.removed)")
+        }
+        return result.body
+    }
 
     private func itemsURL(endpoint: String, parameters: [String: String]) throws -> URL {
         guard let baseURL = environmentManager?.getBaseURL(), !baseURL.isEmpty,

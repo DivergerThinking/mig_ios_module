@@ -48,12 +48,38 @@ final class MIGHTTPClientTests: XCTestCase {
         XCTAssertEqual(renewals, 1)
     }
 
-    func testOtherStatusesPassThrough() async throws {
-        let (client, transport, counter) = try await makeClient(codes: [403])
+    func test403WithLostSessionRenewsAndReplays() async throws {
+        // data 403 → session probe 401 → renewal → replay 200
+        let (client, transport, counter) = try await makeClient(codes: [403, 401, 200])
+
+        let (_, response) = try await client.send(request("/api/data/items/trainings"))
+
+        XCTAssertEqual(response.statusCode, 200)
+        let sent = await transport.sent
+        XCTAssertEqual(sent.map { rawPath($0.url) }, ["/api/data/items/trainings/", "/api/member/session/", "/api/data/items/trainings/"])
+        let renewals = await counter.value
+        XCTAssertEqual(renewals, 1)
+    }
+
+    func test403WithValidSessionIsARealForbidden() async throws {
+        // data 403 → session probe 200 → no renewal
+        let (client, transport, counter) = try await makeClient(codes: [403, 200])
 
         let (_, response) = try await client.send(request("/api/data/items/trainings"))
 
         XCTAssertEqual(response.statusCode, 403)
+        let sent = await transport.sent
+        let renewals = await counter.value
+        XCTAssertEqual(sent.count, 2)
+        XCTAssertEqual(renewals, 0)
+    }
+
+    func testOtherStatusesPassThrough() async throws {
+        let (client, transport, counter) = try await makeClient(codes: [409])
+
+        let (_, response) = try await client.send(request("/api/data/items/trainings"))
+
+        XCTAssertEqual(response.statusCode, 409)
         let sent = await transport.sent
         let renewals = await counter.value
         XCTAssertEqual(sent.count, 1)

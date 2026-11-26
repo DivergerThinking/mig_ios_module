@@ -478,59 +478,83 @@ class ReservationFlowViewModel: ObservableObject {
               !selectedSlots.isEmpty else { return }
 
         isCreatingReservation = true
+        bookIndividual(date: date, space: space, userId: userId) { [weak self] success in
+            self?.finishBooking(success)
+        }
+    }
+
+    /// The gateway cannot change date/slot/times of a reservation: editing cancels the old one and books
+    /// the new one. If the new booking fails, the old one is restored on a best-effort basis.
+    func updateIndividualReservation() {
+        guard let old = individualSelectedInformation, let oldId = old.id,
+              let date = selectedDate, let space = selectedSpace,
+              let userId = userManager.getUser()?.id, !selectedSlots.isEmpty else { return }
+
+        isCreatingReservation = true
+        // Cancel first: users without a confirmed DNI may only hold one reservation.
+        apiManager.deleteReservation(id: oldId) { [weak self] result in
+            guard let self else { return }
+            guard case .success = result else { self.finishBooking(false); return }
+            self.bookIndividual(date: date, space: space, userId: userId) { [weak self] success in
+                guard let self else { return }
+                if !success { self.restoreReservation(old, userId: userId) }
+                self.finishBooking(success)
+            }
+        }
+    }
+
+    /// Main reservation + QR, optional add-on linked with `companion_of`, then the server-side email.
+    private func bookIndividual(date: Date, space: Space, userId: String, completion: @escaping (Bool) -> Void) {
         let teamId = personalReservations ? nil : userManager.getSelectedTeam()?.id
         let slot = findFreeSlot(in: space, occupancyMap: slotOccupancyMap, for: selectedSlots)
 
         apiManager.createIndividualReservation(date: date, slot: slot, userId: userId, teamId: teamId, times: selectedSlots) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
-                switch result {
-                case .success(let reserveResponse):
-                    self.apiManager.uploadQRAndUpdateReservation(reservationInfo: reserveResponse, times: self.selectedSlots) { [weak self] qrResult in
-                        DispatchQueue.main.async {
-                            guard let self else { return }
-                            switch qrResult {
-                            case .success:
-                                self.createAddonIfNeeded { [weak self] addonSuccess in
-                                    DispatchQueue.main.async {
-                                        guard let self else { return }
-                                        self.sendEmailWithAddon()
-                                        self.isCreatingReservation = false
-                                        if addonSuccess {
-                                            self.reservationSuccess = true; self.onReservationSuccess()
-                                        } else {
-                                            self.reservationSuccess = false; self.onReservationFail()
-                                        }
-                                    }
-                                }
-                            case .failure:
-                                self.isCreatingReservation = false; self.reservationSuccess = false; self.onReservationFail()
+                guard case .success(let reserveResponse) = result, let reservationId = reserveResponse.id else {
+                    completion(false); return
+                }
+                self.apiManager.uploadQRAndUpdateReservation(reservationInfo: reserveResponse, times: self.selectedSlots) { [weak self] qrResult in
+                    DispatchQueue.main.async {
+                        guard let self else { return }
+                        guard case .success = qrResult else {
+                            self.apiManager.deleteReservation(id: reservationId) { _ in completion(false) }
+                            return
+                        }
+                        self.createAddonIfNeeded(mainReservationId: reservationId) { [weak self] addonSuccess in
+                            DispatchQueue.main.async {
+                                self?.apiManager.sendIndividualReservationEmail(reservationId: reservationId)
+                                completion(addonSuccess)
                             }
                         }
                     }
-                case .failure:
-                    self.isCreatingReservation = false; self.reservationSuccess = false; self.onReservationFail()
                 }
             }
         }
     }
 
-    func updateIndividualReservation() {
-        guard let reservationId = individualSelectedInformation?.id,
-              let date = selectedDate, let space = selectedSpace, !selectedSlots.isEmpty else { return }
-
-        isCreatingReservation = true
-        let slot = space.slots.first ?? Slot(id: 0, position: "", space: 0)
-
-        apiManager.updateIndividualReservation(reservationId: reservationId, date: date, slot: slot, times: selectedSlots) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.isCreatingReservation = false
-                switch result {
-                case .success: self.reservationSuccess = true; self.onReservationSuccess()
-                case .failure: self.reservationSuccess = false; self.onReservationFail()
-                }
+    private func restoreReservation(_ old: IndividualReservation, userId: String) {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        let times = old.times.compactMap { $0.gamingSpaceTimesID }.compactMap { t -> GamingSpaceTime? in
+            guard let id = t.id else { return nil }
+            return GamingSpaceTime(id: id, time: t.time ?? "", value: t.value ?? 0)
+        }
+        guard let date = fmt.date(from: String(old.date.prefix(10))), !times.isEmpty else { return }
+        apiManager.createIndividualReservation(date: date, slot: old.slot, userId: userId, teamId: nil, times: times) { [weak self] result in
+            guard case .success(let restored) = result else {
+                Logger.shared.log("No se pudo restaurar la reserva original")
+                return
             }
+            self?.apiManager.uploadQRAndUpdateReservation(reservationInfo: restored, times: times) { _ in }
+        }
+    }
+
+    private func finishBooking(_ success: Bool) {
+        DispatchQueue.main.async {
+            self.isCreatingReservation = false
+            self.reservationSuccess = success
+            if success { self.onReservationSuccess() } else { self.onReservationFail() }
         }
     }
 
@@ -612,12 +636,12 @@ class ReservationFlowViewModel: ObservableObject {
 
     // MARK: - Helpers privados
 
-    private func createAddonIfNeeded(completion: @escaping (Bool) -> Void) {
+    private func createAddonIfNeeded(mainReservationId: Int, completion: @escaping (Bool) -> Void) {
         guard let date = selectedDate, let userId = userManager.getUser()?.id else { completion(true); return }
 
         if wantsSimulator, !simulatorSelectedSlots.isEmpty, let simSpace = simulatorSpace {
             let slot = findFreeSlot(in: simSpace, occupancyMap: simulatorSlotOccupancyMap, for: simulatorSelectedSlots)
-            apiManager.createAddonReservation(date: date, userId: userId, addonSlot: slot, addonTimes: simulatorSelectedSlots) { result in
+            apiManager.createAddonReservation(date: date, userId: userId, addonSlot: slot, addonTimes: simulatorSelectedSlots, companionOf: mainReservationId) { result in
                 completion(result.isSuccess)
             }
             return
@@ -625,23 +649,13 @@ class ReservationFlowViewModel: ObservableObject {
 
         if wantsExtraSpace, !extraSpaceSelectedSlots.isEmpty, let extra = extraSpace {
             let slot = findFreeSlot(in: extra, occupancyMap: extraSpaceSlotOccupancyMap, for: extraSpaceSelectedSlots)
-            apiManager.createAddonReservation(date: date, userId: userId, addonSlot: slot, addonTimes: extraSpaceSelectedSlots) { result in
+            apiManager.createAddonReservation(date: date, userId: userId, addonSlot: slot, addonTimes: extraSpaceSelectedSlots, companionOf: mainReservationId) { result in
                 completion(result.isSuccess)
             }
             return
         }
 
         completion(true)
-    }
-
-    private func sendEmailWithAddon() {
-        guard let date = selectedDate, let device = selectedSpace?.device else { return }
-        let extraBlock = apiManager.buildExtraBlock(
-            date: date,
-            wantsSimulator: wantsSimulator, simulatorSlots: simulatorSelectedSlots, simulatorDevice: simulatorSpace?.device,
-            wantsExtraSpace: wantsExtraSpace, extraSpaceSlots: extraSpaceSelectedSlots, extraSpaceDevice: extraSpace?.device
-        )
-        apiManager.sendIndividualReservationEmail(date: date, device: device, times: selectedSlots, extraBlock: extraBlock)
     }
 
     private func resolvePlayerTuples() -> [(id: String, email: String, name: String)] {

@@ -54,7 +54,11 @@ final class MIGHTTPClient: @unchecked Sendable {
         self.backoffSeconds = backoffSeconds
     }
 
-    /// Sends a data request: on 401 renews the session once and replays once.
+    /// Sends a data request: if the session was lost, renews it once and replays once.
+    ///
+    /// The gateway treats a data call without a valid session as anonymous and answers **403**, not 401.
+    /// A 403 is checked against `GET /api/member/session/`: only if that says 401 is the session renewed;
+    /// otherwise it is a genuine "forbidden" and goes back to the caller.
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let prepared = GatewayRequest.prepare(request, origin: origin())
         if await session.isStale() {
@@ -62,9 +66,20 @@ final class MIGHTTPClient: @unchecked Sendable {
         }
         let generation = await session.generation
         let first = try await sendWithBackoff(prepared)
-        guard first.1.statusCode == 401 else { return first }
-        guard await session.renew(seenGeneration: generation) else { return first }
+        let lost: Bool
+        switch first.1.statusCode {
+        case 401: lost = true
+        case 403: lost = await sessionLost()
+        default: lost = false
+        }
+        guard lost, await session.renew(seenGeneration: generation) else { return first }
         return try await sendWithBackoff(prepared)
+    }
+
+    private func sessionLost() async -> Bool {
+        guard let url = URL(string: "\(origin())/api/member/session/"),
+              let (_, response) = try? await sendOnce(URLRequest(url: url)) else { return false }
+        return response.statusCode == 401
     }
 
     /// Forget the current member (new launch, environment change).

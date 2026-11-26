@@ -202,75 +202,40 @@ class ReservationAPIManager {
 
     // MARK: - Crear reserva add-on (simulador o espacio extra)
 
+    /// The gateway only allows the gaming zone + simulator pair when the add-on references the main
+    /// reservation created in the same flow (`companion_of`).
     func createAddonReservation(
         date: Date,
         userId: String,
         addonSlot: Slot,
         addonTimes: [GamingSpaceTime],
+        companionOf mainReservationId: Int,
         completion: @escaping (Result<Void, Error>) -> Void
     ) {
-        let dateFmt = DateFormatter()
-        dateFmt.dateFormat = "yyyy-MM-dd"
-
-        let body: [String: Any] = [
-            "date": dateFmt.string(from: date),
-            "user": userId,
-            "slot": addonSlot.id,
-            "times": addonTimes.map { ["gaming_space_times_id": ["id": $0.id]] }
-        ]
-
-        Task {
-            do {
-                let response: ReserveResponseModel = try await DirectusService.shared.sendRequest(
-                    endpoint: "gaming_space_reserves",
-                    method: .POST,
-                    body: body
-                )
-                await MainActor.run {
-                    self.uploadQRAndUpdateReservation(reservationInfo: response.data, times: addonTimes) { result in
-                        switch result {
-                        case .success: completion(.success(()))
-                        case .failure(let error): completion(.failure(error))
-                        }
-                    }
+        let reservation = Reservation(
+            id: 0, status: "active",
+            slot: addonSlot, date: date, user: userId, team: nil,
+            training: nil, qrImage: nil, qrValue: nil,
+            times: addonTimes, peripheralLoans: []
+        )
+        reservationService.createReservation(reservation: reservation, companionOf: mainReservationId) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let response):
+                self.uploadQRAndUpdateReservation(reservationInfo: response, times: addonTimes) { qrResult in
+                    DispatchQueue.main.async { completion(qrResult) }
                 }
-            } catch {
-                await MainActor.run {
-                    completion(.failure(error))
-                }
+            case .failure(let error):
+                DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
     }
 
-    // MARK: - Actualizar reserva individual (edición)
+    // MARK: - Cancelar reserva (edición = cancelar + crear)
 
-    func updateIndividualReservation(
-        reservationId: Int,
-        date: Date,
-        slot: Slot,
-        times: [GamingSpaceTime],
-        completion: @escaping (Result<Void, Error>) -> Void
-    ) {
-        let dateFmt = DateFormatter()
-        dateFmt.dateFormat = "yyyy-MM-dd"
-
-        let body: [String: Any] = [
-            "date": dateFmt.string(from: date),
-            "slot": slot.id,
-            "times": times.map { ["gaming_space_times_id": ["id": $0.id]] }
-        ]
-
-        Task {
-            do {
-                let _: ReserveResponseModel = try await DirectusService.shared.sendRequest(
-                    endpoint: "gaming_space_reserves/\(reservationId)",
-                    method: .PATCH,
-                    body: body
-                )
-                await MainActor.run { completion(.success(())) }
-            } catch {
-                await MainActor.run { completion(.failure(error)) }
-            }
+    func deleteReservation(id: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        reservationService.deleteReservation(id: String(id)) { result in
+            DispatchQueue.main.async { completion(result) }
         }
     }
 
@@ -294,7 +259,7 @@ class ReservationAPIManager {
         let playerIds = players.map { $0.id }
 
         let trainingRequest = TrainingRequest(
-            status: "active", type: spaceType,
+            status: "active", type: spaceType, // status is not sent: the gateway sets it
             startDate: dateString, time: time,
             teamId: teamId, notes: notes,
             playerIds: playerIds, reserveIds: []
@@ -331,7 +296,7 @@ class ReservationAPIManager {
                             }
                             reserveIds.append(reserveId)
                             self.uploadQRAndUpdateReservation(reservationInfo: reserveResponse, times: selectedSlots) { _ in
-                                self.sendTeamReservationEmail(playerEmail: player.email, playerName: player.name, date: date, times: selectedSlots, device: space.device)
+                                self.reservationService.sendReservationEmail(reservationId: reserveId, isTeam: true)
                                 group.leave()
                             }
                         case .failure(let error):
@@ -387,8 +352,8 @@ class ReservationAPIManager {
         dateFmt.dateFormat = "yyyy-MM-dd"
         let playerIds = players.map { $0.id }
 
+        // The gateway sets the status; no email: it only sends reservation-based notifications (AUTH-5).
         let body: [String: Any] = [
-            "status":     "active",
             "type":       "virtual",
             "start_date": dateFmt.string(from: date),
             "time":       time,
@@ -404,12 +369,7 @@ class ReservationAPIManager {
                     method: .POST,
                     body: body
                 )
-                await MainActor.run {
-                    for player in players {
-                        self.sendVirtualTrainingEmail(playerEmail: player.email, playerName: player.name, date: date, time: time)
-                    }
-                    completion(.success(()))
-                }
+                await MainActor.run { completion(.success(())) }
             } catch {
                 await MainActor.run { completion(.failure(error)) }
             }
@@ -418,74 +378,8 @@ class ReservationAPIManager {
 
     // MARK: - Emails
 
-    func sendIndividualReservationEmail(
-        date: Date,
-        device: String,
-        times: [GamingSpaceTime],
-        extraBlock: String = ""
-    ) {
-        guard let user = userManager.getUser(),
-              let email = user.email, !email.isEmpty else { return }
-
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd/MM/yyyy"
-
-        reservationService.sendReservationEmail(
-            email: email,
-            firstName: user.firstName ?? "",
-            date: fmt.string(from: date),
-            times: times.sorted { $0.value < $1.value }.map { $0.time }.joined(separator: " - "),
-            device: device,
-            extraBlock: extraBlock
-        )
+    func sendIndividualReservationEmail(reservationId: Int) {
+        reservationService.sendReservationEmail(reservationId: reservationId)
     }
 
-    private func sendTeamReservationEmail(playerEmail: String, playerName: String, date: Date, times: [GamingSpaceTime], device: String) {
-        guard !playerEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd/MM/yyyy"
-        reservationService.sendReservationEmail(
-            email: playerEmail, firstName: playerName,
-            date: fmt.string(from: date),
-            times: times.sorted { $0.value < $1.value }.map { $0.time }.joined(separator: " - "),
-            device: device, extraBlock: ""
-        )
-    }
-
-    private func sendVirtualTrainingEmail(playerEmail: String, playerName: String, date: Date, time: String) {
-        guard !playerEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd/MM/yyyy"
-        reservationService.sendReservationEmail(
-            email: playerEmail, firstName: playerName,
-            date: fmt.string(from: date),
-            times: time, device: "Virtual", extraBlock: ""
-        )
-    }
-
-    // MARK: - Helper: construir extraBlock para email
-
-    func buildExtraBlock(
-        date: Date,
-        wantsSimulator: Bool,
-        simulatorSlots: [GamingSpaceTime],
-        simulatorDevice: String?,
-        wantsExtraSpace: Bool,
-        extraSpaceSlots: [GamingSpaceTime],
-        extraSpaceDevice: String?
-    ) -> String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd/MM/yyyy"
-        let dateStr = fmt.string(from: date)
-
-        if wantsSimulator, !simulatorSlots.isEmpty, let device = simulatorDevice {
-            let times = simulatorSlots.sorted { $0.value < $1.value }.map { $0.time }.joined(separator: " - ")
-            return "<p><strong><u>Reserva extra incluida:</u></strong><br><strong>Fecha:</strong> \(dateStr)<br><strong>Hora:</strong> \(times)<br><strong>Dispositivo:</strong> \(device)</p>"
-        }
-        if wantsExtraSpace, !extraSpaceSlots.isEmpty, let device = extraSpaceDevice {
-            let times = extraSpaceSlots.sorted { $0.value < $1.value }.map { $0.time }.joined(separator: " - ")
-            return "<p><strong><u>Reserva extra incluida:</u></strong><br><strong>Fecha:</strong> \(dateStr)<br><strong>Hora:</strong> \(times)<br><strong>Dispositivo:</strong> \(device)</p>"
-        }
-        return ""
-    }
 }

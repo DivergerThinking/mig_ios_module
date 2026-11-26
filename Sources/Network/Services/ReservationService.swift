@@ -130,28 +130,21 @@ class ReservationService {
 
     // MARK: - Crear reserve individual
 
-    func createReservation(reservation: Reservation, completion: @escaping (Result<ReserveResponse, Error>) -> Void) {
+    /// `POST gaming_space_reserves` with exactly the fields the gateway accepts
+    /// (date, user, slot, team, training, times, companion_of). Status, QR and loans are set by the server.
+    func createReservation(reservation: Reservation, companionOf: Int? = nil, completion: @escaping (Result<ReserveResponse, Error>) -> Void) {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
-        var reservationDict = [
-            "status": reservation.status ?? "active",
+        var reservationDict: [String: Any] = [
             "slot": reservation.slot.id,
             "user": reservation.user ?? "",
             "date": dateFormatter.string(from: reservation.date),
-            "peripheral_loans": reservation.peripheralLoans ?? [],
-        ] as [String: Any]
-
-        if let team = reservation.team {
-            reservationDict["team"] = team
-        }
-
-        if let training = reservation.training {
-            reservationDict["training"] = training
-        }
-
-        let timesMapped = reservation.times.map { ["gaming_space_times_id": ["id": $0.id]] }
-        reservationDict["times"] = timesMapped
+            "times": reservation.times.map { ["gaming_space_times_id": ["id": $0.id]] },
+        ]
+        if let team = reservation.team { reservationDict["team"] = team }
+        if let training = reservation.training { reservationDict["training"] = training }
+        if let companionOf { reservationDict["companion_of"] = companionOf }
 
         Task {
             do {
@@ -180,8 +173,8 @@ class ReservationService {
         let playersMapped = request.playerIds.map { ["users_id": $0] }
         let reservesMapped = request.reserveIds
 
+        // The gateway sets the status; it only accepts team, notes, time, start_date, type, players, reserves.
         let body: [String: Any] = [
-            "status":     request.status,
             "type":       request.type,
             "start_date": request.startDate,
             "time":       request.time,
@@ -230,64 +223,6 @@ class ReservationService {
         }
     }
 
-    // MARK: - Asignar trainingId a una reserve
-
-    func assignTrainingToReserve(reserveId: Int, trainingId: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        let body: [String: Any] = [
-            "training": trainingId
-        ]
-
-        Task {
-            do {
-                let _: ReserveResponseModel = try await DirectusService.shared.sendRequest(
-                    endpoint: "gaming_space_reserves/\(reserveId)",
-                    method: .PATCH,
-                    body: body
-                )
-                Logger.shared.log("Training \(trainingId) asignado a reserve \(reserveId)")
-                completion(.success(()))
-            } catch {
-                Logger.shared.log("Error al asignar training a reserve \(reserveId): \(error)")
-                completion(.failure(error))
-            }
-        }
-    }
-
-    // MARK: - Actualizar reserve de equipo
-
-    func updateExistingReserveForTeam(
-        reserveId: Int,
-        date: Date,
-        slot: Slot,
-        times: [GamingSpaceTime],
-        completion: @escaping (Result<ReserveResponse, Error>) -> Void
-    ) {
-        let dateFmt = DateFormatter()
-        dateFmt.dateFormat = "yyyy-MM-dd"
-
-        let timesMapped = times.map { ["gaming_space_times_id": ["id": $0.id]] }
-
-        let body: [String: Any] = [
-            "date":  dateFmt.string(from: date),
-            "slot":  slot.id,
-            "times": timesMapped
-        ]
-
-        Task {
-            do {
-                let response: ReserveResponseModel = try await DirectusService.shared.sendRequest(
-                    endpoint: "gaming_space_reserves/\(reserveId)",
-                    method: .PATCH,
-                    body: body
-                )
-                completion(.success(response.data))
-            } catch {
-                Logger.shared.log("Error al actualizar reserve de equipo: \(error)")
-                completion(.failure(error))
-            }
-        }
-    }
-
     // MARK: - Actualizar training
 
     func updateTraining(
@@ -328,12 +263,8 @@ class ReservationService {
     // MARK: - Actualizar reserva existente (QR)
 
     func updateExistingReservation(reservationId: Int, qrImage: String, reservation: Reservation, completion: @escaping (Result<ReserveResponse, Error>) -> Void) {
-        var reservationDict: [String: Any] = [
-            "qrImage": qrImage,
-        ]
-
-        let timesMapped = reservation.times.map { ["gaming_space_times_id": ["id": $0.id]] }
-        reservationDict["times"] = timesMapped
+        // The gateway only lets a member PATCH `qrImage` (or `status = cancelled`) on a reservation.
+        let reservationDict: [String: Any] = ["qrImage": qrImage]
 
         let endpoint = "gaming_space_reserves/\(reservationId)"
 
@@ -362,7 +293,7 @@ class ReservationService {
     // MARK: - Flow IDs por entorno
 
     private var isPro: Bool {
-        UserDefaults.standard.value(forKey: "selectedEnvironment") as? Bool ?? true
+        MIGEnvironment.current == .pro
     }
 
     private var individualReservationFlowId: String {
@@ -377,64 +308,17 @@ class ReservationService {
             : "3a753e17-6004-461d-b548-ad3cebdb3111"
     }
 
-    // MARK: - Enviar email de reserva individual via Directus Flow
+    // MARK: - Emails de reserva (Directus Flows a través de la pasarela)
 
-    func sendReservationEmail(
-        email: String,
-        firstName: String,
-        date: String,
-        times: String,
-        device: String,
-        extraBlock: String = ""
-    ) {
-        let body: [String: Any] = [
-            "email": email,
-            "first_name": firstName,
-            "date": date,
-            "times": times,
-            "device": device,
-            "extra_block": extraBlock
-        ]
-
+    /// The server builds and sends the email from the reservation record; the body is only `{"recordId": id}`.
+    /// Failures are logged and never block the booking.
+    func sendReservationEmail(reservationId: Int, isTeam: Bool = false) {
+        let flowId = isTeam ? teamReservationFlowId : individualReservationFlowId
         Task {
             do {
-                try await DirectusService.shared.triggerFlow(
-                    flowId: individualReservationFlowId,
-                    body: body
-                )
-                Logger.shared.log("Email de reserva individual enviado a \(email)")
+                try await DirectusService.shared.triggerFlow(flowId: flowId, body: ["recordId": reservationId])
             } catch {
-                Logger.shared.log("Error al enviar email de reserva individual: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    // MARK: - Enviar email de reserva de equipo via Directus Flow
-
-    func sendTeamReservationEmail(
-        email: String,
-        firstName: String,
-        date: String,
-        times: String,
-        device: String
-    ) {
-        let body: [String: Any] = [
-            "email": email,
-            "first_name": firstName,
-            "date": date,
-            "times": times,
-            "device": device
-        ]
-
-        Task {
-            do {
-                try await DirectusService.shared.triggerFlow(
-                    flowId: teamReservationFlowId,
-                    body: body
-                )
-                Logger.shared.log("Email de reserva de equipo enviado a \(email)")
-            } catch {
-                Logger.shared.log("Error al enviar email de reserva de equipo: \(error.localizedDescription)")
+                Logger.shared.log("Error al enviar email de reserva: \(error.localizedDescription)")
             }
         }
     }
@@ -465,7 +349,7 @@ class ReservationService {
 
     func getReservesByUser(userId: String, completion: @escaping (Result<[IndividualReservation], Error>) -> Void) {
         let parameters: [String: String] = [
-            "fields": "id, date, slot.*, qrImage, qrValue, times.gaming_space_times_id.time",
+            "fields": "id, date, slot.*, qrImage, qrValue, times.gaming_space_times_id.time, times.gaming_space_times_id.id, times.gaming_space_times_id.value",
             "filter[user][_eq]": userId,
             "filter[date][_gte]": "$NOW",
             "filter[training][_null]": "true",

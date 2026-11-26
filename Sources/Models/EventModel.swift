@@ -63,13 +63,13 @@ struct ReserveResponse: Codable {
     let slot: Int?
     let status: String?
     let team: String?
-    let times: [Int]?
     let training, user: String?
 
+    // `times` is not decoded: the gateway returns `[{"gaming_space_times_id": <id>}]` and nobody reads it.
     enum CodingKeys: String, CodingKey {
         case date, id
         case peripheralLoans = "peripheral_loans"
-        case qrImage, qrValue, slot, status, team, times, training, user
+        case qrImage, qrValue, slot, status, team, training, user
     }
 }
 
@@ -104,6 +104,8 @@ struct Time: Codable {
 // MARK: - GamingSpaceTimesID
 struct GamingSpaceTimesID: Codable {
     let time: String?
+    var id: Int? = nil
+    var value: Int? = nil
 }
 
 //struct EventModel: Codable {
