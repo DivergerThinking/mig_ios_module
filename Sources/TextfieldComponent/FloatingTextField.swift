@@ -25,10 +25,10 @@ struct FloatingTextField: View {
     private var onTextAction: ((_ oldValue: String, _ newValue: String) -> ())?
     
     init(text: String, placeholderText: String, isDescripcionTextfield: Bool = false, onTextAction: ((_: String, _: String) -> Void)? = nil) {
-        self.text = text
         self.placeholderText = placeholderText
         self.isDescripcionTextfield = isDescripcionTextfield
         self.onTextAction = onTextAction
+        self._text = State(initialValue: text)
     }
     
     var body: some View {

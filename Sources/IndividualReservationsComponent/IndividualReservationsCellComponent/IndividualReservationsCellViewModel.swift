@@ -13,8 +13,8 @@ class IndividualReservationsCellViewModel: ObservableObject {
     var showDeleteAndEditOption: Bool
     
     init(reservation: IndividualReservation, showDeleteAndEditOption: Bool) {
-        self.reservation = reservation
         self.showDeleteAndEditOption = showDeleteAndEditOption
+        self._reservation = Published(initialValue: reservation)
     }
     
     func getReservationConsole() -> String {

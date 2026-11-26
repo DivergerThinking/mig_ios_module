@@ -18,10 +18,10 @@ class FloatingTextFieldViewModel: ObservableObject {
     private var onTextAction: ((_ oldValue: String, _ newValue: String) -> Void)?
     
     init(text: String = "", placeholderText: String, isDescripcionTextfield: Bool = false, onTextAction: ((String, String) -> Void)? = nil) {
-        self.text = text
         self.placeholderText = placeholderText
         self.isDescripcionTextfield = isDescripcionTextfield
         self.onTextAction = onTextAction
+        self._text = Published(initialValue: text)
     }
     
     func setText(_ newText: String) {

@@ -49,8 +49,8 @@ class SeeReservationsOrCreateTeamTrainingViewModel: ObservableObject {
     private let selectedTeam: TeamModelReal?
     
     init(isUserMode: Bool, selectedTeam: TeamModelReal?) {
-        self.isUserMode = isUserMode
         self.selectedTeam = selectedTeam
+        self.isUserMode = isUserMode
         self.loadAllData()
     }
     

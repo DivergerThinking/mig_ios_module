@@ -21,8 +21,8 @@ class TeamReservationCellComponentViewModel: ObservableObject {
     var showDeleteAndEditOption: Bool
     
     init(reservation: EventModel, showDeleteAndEditOption: Bool) {
-        self.reservation = reservation
         self.showDeleteAndEditOption = showDeleteAndEditOption
+        self._reservation = Published(initialValue: reservation)
     }
     
     func getTeamName() -> String {
